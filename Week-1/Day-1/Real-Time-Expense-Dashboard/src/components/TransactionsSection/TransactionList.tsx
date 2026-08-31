@@ -1,4 +1,4 @@
-import sampleTransactions from "../../sampleTransactions";
+import sampleTransactions from "../../data/sampleTransactions";
 
 const TransactionList = () => {
   return (
