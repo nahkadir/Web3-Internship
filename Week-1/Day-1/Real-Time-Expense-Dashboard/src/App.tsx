@@ -1,8 +1,8 @@
-import Footer from "./Components/Footer";
-import Header from "./Components/Header";
-import Subheading from "./Components/Subheading";
-import SummaryCards from "./Components/SummaryCard/SummaryCards";
-import TransactionsSection from "./Components/TransactionsSection/TransactionsSection";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
+import Subheading from "./components/Subheading";
+import SummaryCards from "./components/SummaryCard/SummaryCards";
+import TransactionsSection from "./components/TransactionsSection/TransactionsSection";
 
 const App = () => {
   return (
