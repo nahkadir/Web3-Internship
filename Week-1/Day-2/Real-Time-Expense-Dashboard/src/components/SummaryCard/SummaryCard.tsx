@@ -1,5 +1,3 @@
-// import { Wallet, TrendingUp, TrendingDown, Calculator } from "lucide-react";
-
 interface SummaryCardProps {
   label: string;
   value: string;
