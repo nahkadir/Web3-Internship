@@ -1,10 +1,19 @@
 import SummaryCard from "./SummaryCard";
-import { useTransactions } from "../../hooks/useTransactions";
+import { useFilteredTransactions } from "../../hooks/useFilteredTransactions";
+import { calculateTotals } from "../../utils/helpers";
 import { formatCurrency } from "../../utils/helpers";
 
 const SummaryCards = () => {
-  const { totalIncome, totalExpense, netBalance, incomeCount, expenseCount } =
-    useTransactions();
+  const filteredTransactions = useFilteredTransactions();
+  const { totalIncome, totalExpense, netBalance } =
+    calculateTotals(filteredTransactions);
+
+  const incomeCount = filteredTransactions.filter(
+    (t) => t.type === "income",
+  ).length;
+  const expenseCount = filteredTransactions.filter(
+    (t) => t.type === "expense",
+  ).length;
 
   return (
     <div className="px-4 pt-10 sm:px-6">

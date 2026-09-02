@@ -1,4 +1,3 @@
-// components/Charts/CategoryBreakdown.tsx
 import {
   PieChart,
   Pie,
@@ -7,7 +6,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useTransactions } from "../../hooks/useTransactions";
+import type { Transaction } from "../../types";
+import { groupByCategory } from "../../utils/chartUtils";
+
+interface CategoryBreakdownProps {
+  transactions: Transaction[];
+}
 
 const COLORS = [
   "#B9FF66",
@@ -21,19 +25,8 @@ const COLORS = [
   "#5C6270",
 ];
 
-const CategoryBreakdown = () => {
-  const { transactions } = useTransactions();
-
-  const totalsByCategory = transactions
-    .filter((t) => t.type === "expense")
-    .reduce<Record<string, number>>((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {});
-
-  const chartData = Object.entries(totalsByCategory)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
+const CategoryBreakdown = ({ transactions }: CategoryBreakdownProps) => {
+  const chartData = groupByCategory(transactions);
 
   return (
     <div className="rounded-3xl bg-white p-6">

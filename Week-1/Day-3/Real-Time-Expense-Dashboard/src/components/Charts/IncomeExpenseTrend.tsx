@@ -1,4 +1,3 @@
-// components/Charts/IncomeExpenseTrend.tsx
 import {
   BarChart,
   Bar,
@@ -9,24 +8,15 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { useTransactions } from "../../hooks/useTransactions";
+import type { Transaction } from "../../types";
+import { groupByMonth } from "../../utils/chartUtils";
 
-const IncomeExpenseTrend = () => {
-  const { transactions } = useTransactions();
+interface IncomeExpenseTrendProps {
+  transactions: Transaction[];
+}
 
-  const totalsByMonth = transactions.reduce<
-    Record<string, { income: number; expense: number }>
-  >((acc, t) => {
-    const month = t.date.slice(0, 7); // "2026-08-31" -> "2026-08"
-    if (!acc[month]) acc[month] = { income: 0, expense: 0 };
-    acc[month][t.type] += t.amount;
-    return acc;
-  }, {});
-
-  const chartData = Object.entries(totalsByMonth)
-    .map(([month, totals]) => ({ month, ...totals }))
-    .sort((a, b) => a.month.localeCompare(b.month));
-
+const IncomeExpenseTrend = ({ transactions }: IncomeExpenseTrendProps) => {
+  const chartData = groupByMonth(transactions);
   return (
     <div className="rounded-3xl bg-white p-6">
       <h3 className="text-dark mb-4 text-lg font-bold">Income vs. expenses</h3>
