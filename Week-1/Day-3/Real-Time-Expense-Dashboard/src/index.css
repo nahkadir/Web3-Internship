@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  /* Font Family */
+  --font-display: "Space Grotesk", sans-serif;
+
+  /* Color */
+  --color-green: #b9ff66;
+  --color-grey: #f3f3f3;
+  --color-dark: #191a23;
+  --color-dark-default: #292a32;
+
+  /* Font Size */
+  --text-h1: 60px;
+  --text-h2: 40px;
+  --text-h3: 30px;
+  --text-h4: 20px;
+  --text-p: 18px;
+
+  /* Font Size Mobile*/
+  --text-h1-mob: 43px;
+  --text-h2-mob: 36px;
+  --text-h3-mob: 26px;
+  --text-h4-mob: 18px;
+  --text-p-mob: 16px;
+}
