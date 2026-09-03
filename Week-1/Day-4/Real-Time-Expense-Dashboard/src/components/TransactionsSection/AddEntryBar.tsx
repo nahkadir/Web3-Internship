@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTransactions } from "../../hooks/useTransactions";
+import { useToast } from "../../context/ToastContext";
 import type {
   Transaction,
   TransactionType,
@@ -36,6 +37,7 @@ const AddEntryBar = ({
   editingTransaction,
   onDoneEditing,
 }: AddEntryBarProps) => {
+  const { showToast } = useToast();
   const { addTransaction, updateTransaction } = useTransactions();
 
   const [type, setType] = useState<TransactionType>("expense");
@@ -96,6 +98,7 @@ const AddEntryBar = ({
         date,
       };
       updateTransaction(editingTransaction.id, updated);
+      showToast("Transaction updated");
       onDoneEditing();
     } else {
       const newTransaction: Transaction = {
@@ -107,6 +110,7 @@ const AddEntryBar = ({
         date,
       };
       addTransaction(newTransaction);
+      showToast("Transaction added");
     }
 
     resetForm();
@@ -120,7 +124,11 @@ const AddEntryBar = ({
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-wrap items-start gap-3 p-4">
       <div className="flex min-w-35 flex-1 flex-col gap-1">
+        <label htmlFor="description" className="sr-only">
+          Description
+        </label>
         <input
+          id="description"
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -132,7 +140,11 @@ const AddEntryBar = ({
       </div>
 
       <div className="flex w-24 flex-col gap-1">
+        <label htmlFor="amount" className="sr-only">
+          Amount
+        </label>
         <input
+          id="amount"
           type="number"
           placeholder="0.00"
           value={amount}
@@ -144,7 +156,11 @@ const AddEntryBar = ({
         )}
       </div>
 
+      <label htmlFor="category" className="sr-only">
+        category
+      </label>
       <select
+        id="category"
         value={category}
         onChange={(e) => setCategory(e.target.value as TransactionCategory)}
         className="bg-grey placeholder:text-p-mob sm:placeholder:text-p rounded-md border border-black/10 p-3 text-gray-700 outline-none"
@@ -155,8 +171,11 @@ const AddEntryBar = ({
           </option>
         ))}
       </select>
-
+      <label htmlFor="date" className="sr-only">
+        date
+      </label>
       <input
+        id="date"
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}

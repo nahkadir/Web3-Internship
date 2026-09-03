@@ -10,13 +10,14 @@ import {
 } from "recharts";
 import type { Transaction } from "../../types";
 import { groupByMonth } from "../../utils/chartUtils";
+import { useMemo } from "react";
 
 interface IncomeExpenseTrendProps {
   transactions: Transaction[];
 }
 
 const IncomeExpenseTrend = ({ transactions }: IncomeExpenseTrendProps) => {
-  const chartData = groupByMonth(transactions);
+  const chartData = useMemo(() => groupByMonth(transactions), [transactions]);
   return (
     <div className="rounded-3xl bg-white p-6">
       <h3 className="text-dark mb-4 text-lg font-bold">Income vs. expenses</h3>

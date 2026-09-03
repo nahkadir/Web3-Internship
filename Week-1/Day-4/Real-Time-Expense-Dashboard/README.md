@@ -1,28 +1,45 @@
-# Day 3 — Filters & Charts
+# Day 4: Notifications, Live Updates, Performance & Polish
 
-## State management approach
+### Toasts
 
-- **`FilterContext`** — separate from `TransactionContext`, holds all filter values (search, category, type, date range, min/max amount) plus `setFilter(key, value)` and `resetFilters()`. Kept separate since filter state changes at a different frequency (every keystroke) and for a different reason than transaction data (add/edit/delete).
-- **`useFilteredTransactions()`** — combines `useTransactions` + `useFilters`, returns one filtered + sorted array, memoized with `useMemo` so it only recomputes when transactions or filters actually change. Filtering is a derived value, not duplicated state.
-- Filtered data flows into `TransactionList`, `SummaryCards`, and all three charts via this one hook — each chart component receives `transactions` as a prop rather than reading context directly, keeping them purely presentational.
+- Made a ToastContext so any part of the app can show a small message
+- Auto-disappears after 3 seconds
+- Used it for: add, update, delete, CSV export success, new live transaction
 
-## Chart library usage
+### CSV Export
 
-Three Recharts charts, transformation logic separated into `utils/chartHelpers.ts` (`groupByCategory`, `groupByMonth`, `calculateCumulativeBalance`) — chart components just call these and render:
+- Now exports only the filtered list, not everything
+- Fixed headers to match spec: id, type, amount, category, description, date
+- Added proper escaping (so commas/quotes in text don't break the file)
+- Button shows "Exporting..." and disables itself while working
 
-- **`IncomeExpenseTrend`** — grouped bar chart, monthly income vs. expense totals. Bar over line since each point is a discrete monthly total, not a continuous flow.
-- **`CategoryBreakdown`** — donut chart, expense-only spend by category. Donut for part-to-whole readability at up to 9 categories.
-- **`BalanceTrend`** — line chart, cumulative net balance over time. Line fits here since it's a genuinely continuous running total.
+### Confirm Before Delete
 
-All three show "No data for selected filters" when a filter produces zero results.
+- Clicking delete no longer removes instantly
+- Opens a small popup asking to confirm first
+- Cancel just closes it, nothing happens
 
-## What was built
+### Accessibility
 
-- `FilterContext` + `Filters` component (search, category, type, date range, min/max amount, Clear Filters)
-- `useFilteredTransactions` hook
-- `TransactionList`, `SummaryCards`, and all charts wired to filtered data
-- `calculateTotals` helper (shared between `useTransactions` and `SummaryCards`)
-- `utils/chartHelpers.ts` with the 3 transformation functions above
-- `BalanceTrend` chart added
+- Added real <label> tags to form inputs (visually hidden but there for screen readers)
 
-**Deliverables:** ✅ All complete — filters functional, List/Cards/Charts filter-aware, 3 chart types implemented, transformation logic in `utils/`, empty states handled.
+### Live Transaction Simulation
+
+- Added a toggle button ("Go live")
+- When on, adds a random transaction every 20 seconds
+- Uses the same addTransaction function as manual entries
+- New row gets a highlight color for a couple seconds
+- Learned useEffect cleanup here — when you turn it off, the old timer has to be cleared (clearInterval) or you get multiple timers running at once
+
+### Error Handling
+
+I had already implemented this yesterday:
+
+- Wrapped localStorage read/write in try/catch
+- If saved data is corrupted or storage fails, app falls back to sample data instead of crashing
+
+### Performance
+
+- Added useMemo to chart data and summary card totals that skips recalculating if data hasn't changed
+- Split table rows into their own component with React.memo
+- Used useCallback for the row's edit/delete handlers so memo actually works

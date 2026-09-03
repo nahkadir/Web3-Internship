@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import type { Transaction } from "../../types";
 import { groupByCategory } from "../../utils/chartUtils";
+import { useMemo } from "react";
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
@@ -26,7 +27,10 @@ const COLORS = [
 ];
 
 const CategoryBreakdown = ({ transactions }: CategoryBreakdownProps) => {
-  const chartData = groupByCategory(transactions);
+  const chartData = useMemo(
+    () => groupByCategory(transactions),
+    [transactions],
+  );
 
   return (
     <div className="rounded-3xl bg-white p-6">

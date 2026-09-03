@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AddEntryBar from "./AddEntryBar";
-import TransactionList from "./TransactionList";
+import TransactionList from "./TransactionList/TransactionList";
 import type { Transaction } from "../../types";
 
 const TransactionsSection = () => {

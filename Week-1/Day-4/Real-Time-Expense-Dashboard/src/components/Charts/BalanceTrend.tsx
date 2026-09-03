@@ -9,13 +9,17 @@ import {
 } from "recharts";
 import { calculateCumulativeBalance } from "../../utils/chartUtils";
 import type { Transaction } from "../../types";
+import { useMemo } from "react";
 
 interface BalanceTrendProps {
   transactions: Transaction[];
 }
 
 const BalanceTrend = ({ transactions }: BalanceTrendProps) => {
-  const chartData = calculateCumulativeBalance(transactions);
+  const chartData = useMemo(
+    () => calculateCumulativeBalance(transactions),
+    [transactions],
+  );
 
   return (
     <div className="rounded-3xl bg-white p-6">

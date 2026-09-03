@@ -10,6 +10,7 @@ export interface TransactionContextType {
   addTransaction: (transaction: Transaction) => void;
   deleteTransaction: (id: string) => void;
   updateTransaction: (id: string, updated: Transaction) => void;
+  lastAddedId: string | null;
 }
 
 // create a context where the initial value is undefined
@@ -53,8 +54,12 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     }
   }, [transactions]);
 
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+
   const addTransaction = (transaction: Transaction) => {
     setTransactions((prev) => [transaction, ...prev]);
+    setLastAddedId(transaction.id);
+    setTimeout(() => setLastAddedId(null), 2000);
   };
 
   const deleteTransaction = (id: string) => {
@@ -72,6 +77,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         addTransaction,
         deleteTransaction,
         updateTransaction,
+        lastAddedId,
       }}
     >
       {children}

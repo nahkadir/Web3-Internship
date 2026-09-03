@@ -4,12 +4,15 @@ import { TransactionProvider } from "./context/TransactionContext.tsx";
 import { FilterProvider } from "./context/FilterContext.tsx";
 import "./index.css";
 import App from "./App.tsx";
+import { ToastProvider } from "./context/ToastContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <FilterProvider>
       <TransactionProvider>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </TransactionProvider>
     </FilterProvider>
   </StrictMode>,

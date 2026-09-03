@@ -2,11 +2,15 @@ import SummaryCard from "./SummaryCard";
 import { useFilteredTransactions } from "../../hooks/useFilteredTransactions";
 import { calculateTotals } from "../../utils/helpers";
 import { formatCurrency } from "../../utils/helpers";
+import { useMemo } from "react";
 
 const SummaryCards = () => {
   const filteredTransactions = useFilteredTransactions();
-  const { totalIncome, totalExpense, netBalance } =
-    calculateTotals(filteredTransactions);
+  const totals = useMemo(
+    () => calculateTotals(filteredTransactions),
+    [filteredTransactions],
+  );
+  const { totalIncome, totalExpense, netBalance } = totals;
 
   const incomeCount = filteredTransactions.filter(
     (t) => t.type === "income",
