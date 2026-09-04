@@ -1,4 +1,4 @@
-import { Sun, Menu, ChartNoAxesCombined } from "lucide-react";
+import { Menu, ChartNoAxesCombined } from "lucide-react";
 import { useState } from "react";
 import LiveSimulator from "./LiveSimulator";
 
@@ -55,13 +55,6 @@ const Header = () => {
 
         <div className="text-p-mob sm:text-p hidden items-center gap-4 sm:flex">
           <LiveSimulator />
-
-          <button
-            aria-label="Toggle theme"
-            className="bg-dark-default flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-300"
-          >
-            <Sun size={20} />
-          </button>
 
           <div className="bg-dark-default text-p-mob sm:text-p hidden gap-2 rounded-full px-2.5 py-1.5 sm:flex sm:items-center">
             <div className="bg-green text-dark flex h-7 w-7 items-center justify-center rounded-full px-4 py-2 text-xs font-bold">
