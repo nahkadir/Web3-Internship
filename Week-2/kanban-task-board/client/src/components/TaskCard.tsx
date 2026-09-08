@@ -1,34 +1,66 @@
-import type { Task, Priority } from "../../types.ts";
+import type { Task } from "../../types";
 
-interface PriorityStyle {
-  label: string;
-  bg: string;
-  text: string;
-}
-
-const priorityStyles: Record<Priority, PriorityStyle> = {
-  high: { label: "High", bg: "bg-[#FF4D6D]/15", text: "text-[#FF4D6D]" },
-  medium: { label: "Medium", bg: "bg-[#FFB020]/15", text: "text-[#FFB020]" },
-  low: { label: "Low", bg: "bg-[#4DA3FF]/15", text: "text-[#4DA3FF]" },
+const priorityStyles = {
+  high: {
+    label: "High",
+    bg: "bg-priority-high/15",
+    text: "text-priority-high",
+  },
+  medium: {
+    label: "Medium",
+    bg: "bg-priority-medium/15",
+    text: "text-priority-medium",
+  },
+  low: { label: "Low", bg: "bg-priority-low/15", text: "text-priority-low" },
 };
 
 interface TaskCardProps {
   task: Task;
+  onClick: () => void;
+  onDelete: () => void;
 }
 
-const TaskCard = ({ task }: TaskCardProps) => {
+const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
   const priority = priorityStyles[task.priority];
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete();
+  };
+
   return (
-    <div className="bg-[#1C1D21] border border-[#2A2B30] rounded-xl p-4 hover:border-[#3A3B42] transition-colors cursor-pointer">
+    <div
+      onClick={onClick}
+      className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md hover:border-border-hover transition-all cursor-pointer relative group"
+    >
+      <button
+        onClick={handleDeleteClick}
+        className="absolute top-3 right-3 text-text-muted hover:text-priority-high opacity-0 group-hover:opacity-100 transition-opacity text-small"
+      >
+        ✕
+      </button>
+
       <span
         className={`inline-block text-xs font-medium px-2 py-1 rounded-md ${priority.bg} ${priority.text}`}
       >
         {priority.label}
       </span>
-      <h3 className="text-[#F2F2F3] text-sm font-medium mt-3 leading-snug">
+
+      <h3 className="text-text text-sm font-medium mt-3 leading-snug pr-4">
         {task.title}
       </h3>
+
+      {task.description && (
+        <p className="text-text-muted text-small mt-1.5 line-clamp-2">
+          {task.description}
+        </p>
+      )}
+
+      {task.dueDate && (
+        <p className="text-text-muted text-small mt-3">
+          Due {new Date(task.dueDate).toLocaleDateString()}
+        </p>
+      )}
     </div>
   );
 };

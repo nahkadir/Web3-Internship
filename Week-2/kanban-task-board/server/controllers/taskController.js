@@ -72,7 +72,8 @@ export const updateTask = async (req, res) => {
         .json({ message: "Not authorized to update this task" });
     }
 
-    const { title, description, status, priority, dueDate } = req.body;
+    const { title, description, status, priority, dueDate, assignedUser } =
+      req.body;
 
     if (title !== undefined) task.title = title;
     if (description !== undefined) task.description = description;

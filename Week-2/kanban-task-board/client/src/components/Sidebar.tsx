@@ -9,16 +9,43 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
   return (
     <aside className="w-64 h-screen bg-surface border-r border-border flex flex-col justify-between py-6 px-4">
       <div>
-        <div className="flex items-center gap-2 px-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center font-bold text-bg">
-            K
+        <div>
+          <div className="flex items-center gap-2 px-2 mb-8">
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect
+                  x="1"
+                  y="2"
+                  width="3"
+                  height="12"
+                  rx="1"
+                  className="fill-bg"
+                />
+                <rect
+                  x="6.5"
+                  y="2"
+                  width="3"
+                  height="7"
+                  rx="1"
+                  className="fill-bg"
+                />
+                <rect
+                  x="12"
+                  y="2"
+                  width="3"
+                  height="9"
+                  rx="1"
+                  className="fill-bg"
+                />
+              </svg>
+            </div>
+            <span className="text-white font-medium text-lg">Kanban</span>
           </div>
-          <span className="text-white font-semibold text-lg">Kanban</span>
         </div>
 
         <nav className="flex flex-col gap-1">
           <div className="px-3 py-2 rounded-lg bg-card text-text text-sm font-medium">
-            Board
+            Dashboard
           </div>
         </nav>
       </div>

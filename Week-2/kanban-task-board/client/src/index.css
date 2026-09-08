@@ -13,17 +13,17 @@
   --color-text: #828282;
   --color-text-muted: #8b8d98;
 
-  --color-accent: #91ff00;
+  --color-accent: #a3ff3d;
 
-  --color-priority-high: #3c1e1e;
-  --color-priority-medium: #977a32;
-  --color-priority-low: #18340f;
+  --color-priority-high: #ff4d6d;
+  --color-priority-medium: #ffb020;
+  --color-priority-low: #4da3ff;
 
   --color-status-todo: #8b8d98;
-  --color-status-progress: #b388ff;
-  --color-status-done: #34d399;
+  --color-status-progress: #f9c237;
+  --color-status-done: #33a8cd;
 
-  --color-danger: #3c1e1e;
+  --color-danger: #ff4d6d;
   --color-success: #34d399;
 
   /* Font sizes — desktop */
