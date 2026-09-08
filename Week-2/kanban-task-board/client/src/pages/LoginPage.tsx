@@ -18,7 +18,7 @@ const LoginPage = () => {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        "https://kanban-task-board-api-gilt.vercel.app/api/auth/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
