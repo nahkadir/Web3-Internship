@@ -1,20 +1,23 @@
-import Sidebar from "./components/Sidebar";
-import KanbanBoard from "./components/KanbanBoard";
-import { currentUser, mockTasks } from "./mockData";
+import { Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import BoardPage from "./pages/BoardPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
-  const handleLogout = (): void => {
-    console.log("Logout clicked — will clear token here later");
-  };
-
   return (
-    <div className="flex bg-[#0E0F11] min-h-screen">
-      <Sidebar user={currentUser} onLogout={handleLogout} />
-      <main className="flex-1 p-8">
-        <h1 className="text-[#F2F2F3] text-xl font-semibold mb-6">Board</h1>
-        <KanbanBoard tasks={mockTasks} />
-      </main>
-    </div>
+    // Routes is the container for all the possible URLs the application understands
+    <Routes>
+      {/* each route defines one URL/Component */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <BoardPage />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }
 

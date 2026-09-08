@@ -8,9 +8,9 @@ interface Column {
 }
 
 const columns: Column[] = [
-  { key: "todo", label: "To Do", dot: "bg-[#8B8D98]" },
-  { key: "in-progress", label: "In Progress", dot: "bg-[#B388FF]" },
-  { key: "done", label: "Done", dot: "bg-[#34D399]" },
+  { key: "todo", label: "TO DO", dot: "bg-[#8B8D98]" },
+  { key: "in-progress", label: "IN PROGRESS", dot: "bg-[#B388FF]" },
+  { key: "done", label: "DONE", dot: "bg-[#34D399]" },
 ];
 
 interface KanbanBoardProps {
@@ -26,16 +26,14 @@ const KanbanBoard = ({ tasks }: KanbanBoardProps) => {
           <div key={col.key}>
             <div className="flex items-center gap-2 mb-4">
               <span className={`w-2 h-2 rounded-full ${col.dot}`} />
-              <h2 className="text-[#F2F2F3] font-medium text-sm">
-                {col.label}
-              </h2>
-              <span className="text-[#8B8D98] text-xs bg-[#1C1D21] px-2 py-0.5 rounded-full">
+              <h2 className="text-text font-medium text-sm">{col.label}</h2>
+              <span className="text-[#8B8D98] text-xs bg-card px-2 py-0.5 rounded-full">
                 {columnTasks.length}
               </span>
             </div>
             <div className="flex flex-col gap-3">
               {columnTasks.map((task) => (
-                <TaskCard key={task.id} task={task} />
+                <TaskCard key={task._id} task={task} />
               ))}
             </div>
           </div>

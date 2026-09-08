@@ -2,8 +2,58 @@
 
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
+
+  /* Colors */
+  --color-bg: #1d1d1f;
+  --color-surface: #161618;
+  --color-card: #242426;
+  --color-border: #2a2b30;
+  --color-border-hover: #3a3b42;
+
+  --color-text: #828282;
+  --color-text-muted: #8b8d98;
+
+  --color-accent: #91ff00;
+
+  --color-priority-high: #3c1e1e;
+  --color-priority-medium: #977a32;
+  --color-priority-low: #18340f;
+
+  --color-status-todo: #8b8d98;
+  --color-status-progress: #b388ff;
+  --color-status-done: #34d399;
+
+  --color-danger: #3c1e1e;
+  --color-success: #34d399;
+
+  /* Font sizes — desktop */
+  --text-h1: 2rem; /* 32px */
+  --text-h1--line-height: 2.375rem;
+  --text-h2: 1.5rem; /* 24px */
+  --text-h2--line-height: 1.875rem;
+  --text-h3: 1.25rem; /* 20px */
+  --text-h3--line-height: 1.625rem;
+  --text-h4: 1rem; /* 16px */
+  --text-h4--line-height: 1.375rem;
+  --text-body: 0.875rem; /* 14px */
+  --text-body--line-height: 1.375rem;
+  --text-small: 0.75rem; /* 12px */
+  --text-small--line-height: 1rem;
+
+  /* Font sizes — mobile */
+  --text-h1-mobile: 1.5rem; /* 24px */
+  --text-h1-mobile--line-height: 1.875rem;
+  --text-h2-mobile: 1.25rem; /* 20px */
+  --text-h2-mobile--line-height: 1.625rem;
+  --text-h3-mobile: 1.125rem; /* 18px */
+  --text-h3-mobile--line-height: 1.5rem;
+  --text-h4-mobile: 0.9375rem; /* 15px */
+  --text-h4-mobile--line-height: 1.25rem;
+  --text-body-mobile: 0.8125rem; /* 13px */
+  --text-body-mobile--line-height: 1.25rem;
 }
 
 body {
-  background-color: #0e0f11;
+  background-color: var(--color-bg);
+  font-family: var(--font-sans);
 }
