@@ -56,7 +56,7 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
             {user.name.charAt(0)}
           </div>
           <div className="overflow-hidden">
-            <p className="text-text text-sm font-medium truncate">
+            <p className="text-white text-sm font-medium truncate">
               {user.name}
             </p>
             <p className="text-[#8B8D98] text-xs truncate">{user.email}</p>

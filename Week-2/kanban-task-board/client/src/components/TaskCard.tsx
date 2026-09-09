@@ -20,7 +20,27 @@ interface TaskCardProps {
   onDelete: () => void;
 }
 
+const getUrgency = (dueDate: string | null, status: Task["status"]) => {
+  if (!dueDate || status === "done") return null;
+
+  const due = new Date(dueDate);
+  const now = new Date();
+  const hoursUntilDue = (due.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+  if (hoursUntilDue < 0) return "overdue";
+  if (hoursUntilDue <= 48) return "soon";
+  return null;
+};
+
 const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
+  const urgency = getUrgency(task.dueDate, task.status);
+  const ringClass =
+    urgency === "overdue"
+      ? "ring-1 ring-priority-high/40"
+      : urgency === "soon"
+        ? "ring-1 ring-priority-medium/40"
+        : "";
+
   const priority = priorityStyles[task.priority];
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -31,7 +51,7 @@ const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
   return (
     <div
       onClick={onClick}
-      className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md hover:border-border-hover transition-all cursor-pointer relative group"
+      className={`bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md hover:border-border-hover transition-all cursor-pointer relative group ${ringClass}`}
     >
       <button
         onClick={handleDeleteClick}

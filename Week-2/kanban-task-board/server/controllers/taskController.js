@@ -1,9 +1,42 @@
 import Task from "../models/Task.js";
 
-// returns all tasks belonging to the logged-in user
 export const getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ owner: req.user._id });
+    const { priority, assignedTo, status, search, dueFrom, dueTo } = req.query;
+
+    if (dueFrom && isNaN(Date.parse(dueFrom))) {
+      return res.status(400).json({ message: "Invalid dueFrom date" });
+    }
+    if (dueTo && isNaN(Date.parse(dueTo))) {
+      return res.status(400).json({ message: "Invalid dueTo date" });
+    }
+
+    const filter = {
+      $or: [{ owner: req.user._id }, { assignedUser: req.user._id }],
+    };
+
+    if (priority) filter.priority = priority;
+    if (assignedTo) filter.assignedUser = assignedTo;
+    if (status) filter.status = status;
+
+    if (dueFrom || dueTo) {
+      filter.dueDate = {};
+      if (dueFrom) filter.dueDate.$gte = new Date(dueFrom);
+      if (dueTo) filter.dueDate.$lte = new Date(dueTo);
+    }
+
+    if (search) {
+      filter.$and = [
+        {
+          $or: [
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
+          ],
+        },
+      ];
+    }
+
+    const tasks = await Task.find(filter);
     res.status(200).json(tasks);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -66,7 +99,12 @@ export const updateTask = async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (task.owner.toString() !== req.user._id.toString()) {
+    const isOwner = task.owner.toString() === req.user._id.toString();
+    const isAssignee =
+      task.assignedUser &&
+      task.assignedUser.toString() === req.user._id.toString();
+
+    if (!isOwner && !isAssignee) {
       return res
         .status(403)
         .json({ message: "Not authorized to update this task" });

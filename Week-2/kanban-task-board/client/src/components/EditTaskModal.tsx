@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type SyntheticEvent } from "react";
 import { updateTask } from "../api/tasks";
+import { getUsers, type User } from "../api/users";
 import { useAuth } from "../context/AuthContext";
 import type { Task } from "../../types";
 
@@ -7,9 +8,17 @@ interface EditTaskModalProps {
   task: Task;
   onClose: () => void;
   onUpdated: (task: Task) => void;
+  onError: () => void;
+  onDelete: (task: Task) => void;
 }
 
-const EditTaskModal = ({ task, onClose, onUpdated }: EditTaskModalProps) => {
+const EditTaskModal = ({
+  task,
+  onClose,
+  onUpdated,
+  onError,
+  onDelete,
+}: EditTaskModalProps) => {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [status, setStatus] = useState<Task["status"]>(task.status);
@@ -17,12 +26,49 @@ const EditTaskModal = ({ task, onClose, onUpdated }: EditTaskModalProps) => {
   const [dueDate, setDueDate] = useState(
     task.dueDate ? task.dueDate.slice(0, 10) : "",
   );
+  const [assignedUser, setAssignedUser] = useState(task.assignedUser || "");
+  const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const { token } = useAuth();
 
-  const handleSubmit = async (e: FormEvent) => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!token) return;
+      try {
+        const data = await getUsers(token);
+        setUsers(data);
+      } catch (err) {
+        // Non-critical
+      }
+    };
+    fetchUsers();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchLatest = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/tasks/${task._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setTitle(data.title);
+          setDescription(data.description);
+          setStatus(data.status);
+          setPriority(data.priority);
+          setDueDate(data.dueDate ? data.dueDate.slice(0, 10) : "");
+          setAssignedUser(data.assignedUser || "");
+        }
+      } catch (err) {
+        // fall back silently to the data already loaded from props
+      }
+    };
+    fetchLatest();
+  }, [task._id, token]);
+
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -33,19 +79,35 @@ const EditTaskModal = ({ task, onClose, onUpdated }: EditTaskModalProps) => {
 
     if (!token) return;
 
-    setLoading(true);
+    const optimisticTask: Task = {
+      ...task,
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate || null,
+      assignedUser: assignedUser || null,
+    };
+
+    onUpdated(optimisticTask);
+    onClose();
+
     try {
-      const updated = await updateTask(
+      await updateTask(
         task._id,
-        { title, description, status, priority, dueDate: dueDate || undefined },
+        {
+          title,
+          description,
+          status,
+          priority,
+          dueDate: dueDate || undefined,
+          assignedUser: assignedUser || undefined,
+        },
         token,
       );
-      onUpdated(updated);
-      onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
+      onUpdated(task);
+      onError();
     }
   };
 
@@ -120,7 +182,30 @@ const EditTaskModal = ({ task, onClose, onUpdated }: EditTaskModalProps) => {
             />
           </div>
 
+          <div className="flex flex-col gap-1">
+            <label className="text-text-muted text-small">Assign to</label>
+            <select
+              value={assignedUser}
+              onChange={(e) => setAssignedUser(e.target.value)}
+              className="bg-bg border border-border rounded-lg px-3 py-2 text-text text-body outline-none focus:border-border-hover"
+            >
+              <option value="">Unassigned</option>
+              {users.map((u) => (
+                <option key={u._id} value={u._id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => onDelete(task)}
+              className="text-priority-high hover:bg-priority-high/10 rounded-lg px-3 py-2 text-body"
+            >
+              Delete
+            </button>
             <button
               type="button"
               onClick={onClose}
@@ -130,10 +215,9 @@ const EditTaskModal = ({ task, onClose, onUpdated }: EditTaskModalProps) => {
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 bg-accent text-bg font-medium rounded-lg py-2 text-body disabled:opacity-60"
+              className="flex-1 bg-accent text-bg font-medium rounded-lg py-2 text-body"
             >
-              {loading ? "Saving..." : "Save changes"}
+              Save changes
             </button>
           </div>
         </form>

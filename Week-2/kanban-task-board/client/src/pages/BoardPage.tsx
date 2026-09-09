@@ -7,6 +7,9 @@ import Toast from "../components/Toast";
 import { getTasks, deleteTask } from "../api/tasks";
 import { useAuth } from "../context/AuthContext";
 import type { Task } from "../../types";
+import FilterBar from "../components/FilterBar";
+import { type TaskFilters } from "../api/tasks";
+import { getUsers, type User } from "../api/users";
 
 function BoardPage() {
   const { user, token, logout } = useAuth();
@@ -14,16 +17,27 @@ function BoardPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
 
+  const [filters, setFilters] = useState<TaskFilters>({});
+
+  useEffect(() => {
+    if (!token) return;
+    getUsers(token)
+      .then(setUsers)
+      .catch(() => {});
+  }, [token]);
+
   useEffect(() => {
     const fetchTasks = async () => {
       if (!token) return;
+      setLoading(true);
       try {
-        const data = await getTasks(token);
+        const data = await getTasks(token, filters);
         setTasks(data);
       } catch (err) {
         setToast({ message: "Failed to load tasks", type: "error" });
@@ -31,9 +45,10 @@ function BoardPage() {
         setLoading(false);
       }
     };
-
     fetchTasks();
-  }, [token]);
+  }, [token, filters]);
+
+  const handleClear = () => setFilters({});
 
   if (!user) return null;
 
@@ -72,9 +87,15 @@ function BoardPage() {
       <Sidebar user={user} onLogout={logout} />
       <main className="flex-1 p-8 overflow-y-auto">
         <h1 className="text-h1 font-semibold mb-6 text-white">Dashboard</h1>
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          onClear={handleClear}
+          users={users}
+        />
 
         {loading ? (
-          <p className="text-text-muted text-body">Loading tasks...</p>
+          <p className="text-text-muted text-body my-4">Loading tasks...</p>
         ) : (
           <KanbanBoard
             tasks={tasks}
@@ -97,9 +118,16 @@ function BoardPage() {
           task={editingTask}
           onClose={() => setEditingTask(null)}
           onUpdated={handleTaskUpdated}
+          onError={() => {
+            setToast({ message: "Failed to update task", type: "error" });
+            setTimeout(() => setToast(null), 3000);
+          }}
+          onDelete={(task) => {
+            setEditingTask(null);
+            handleDeleteClick(task);
+          }}
         />
       )}
-
       {toast && (
         <Toast
           message={toast.message}

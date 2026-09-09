@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { createTask } from "../api/tasks";
+import { getUsers, type User } from "../api/users";
 import { useAuth } from "../context/AuthContext";
 import type { Task } from "../../types";
 
@@ -13,10 +14,25 @@ const CreateTaskModal = ({ onClose, onCreated }: CreateTaskModalProps) => {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [dueDate, setDueDate] = useState("");
+  const [assignedUser, setAssignedUser] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { token } = useAuth();
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!token) return;
+      try {
+        const data = await getUsers(token);
+        setUsers(data);
+      } catch (err) {
+        // Non-critical — form still works without assignee list
+      }
+    };
+    fetchUsers();
+  }, [token]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -32,7 +48,13 @@ const CreateTaskModal = ({ onClose, onCreated }: CreateTaskModalProps) => {
     setLoading(true);
     try {
       const newTask = await createTask(
-        { title, description, priority, dueDate: dueDate || undefined },
+        {
+          title,
+          description,
+          priority,
+          dueDate: dueDate || undefined,
+          assignedUser: assignedUser || undefined,
+        },
         token,
       );
       onCreated(newTask);
@@ -100,6 +122,22 @@ const CreateTaskModal = ({ onClose, onCreated }: CreateTaskModalProps) => {
                 className="bg-bg border border-border rounded-lg px-3 py-2 text-text text-body outline-none focus:border-border-hover"
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-text-muted text-small">Assign to</label>
+            <select
+              value={assignedUser}
+              onChange={(e) => setAssignedUser(e.target.value)}
+              className="bg-bg border border-border rounded-lg px-3 py-2 text-text text-body outline-none focus:border-border-hover"
+            >
+              <option value="">Unassigned</option>
+              {users.map((u) => (
+                <option key={u._id} value={u._id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex gap-2 mt-2">
