@@ -7,7 +7,7 @@ export interface User {
   email: string;
 }
 
-const BASE_URL = "http://localhost:5000/api/users";
+const BASE_URL = "https://kanban-task-board-api-gilt.vercel.app/api/users";
 
 export const getUsers = async (token: string): Promise<User[]> => {
   const res = await fetch(BASE_URL, {

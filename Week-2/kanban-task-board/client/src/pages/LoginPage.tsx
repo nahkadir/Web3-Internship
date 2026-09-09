@@ -18,8 +18,7 @@ const LoginPage = () => {
 
     try {
       const res = await fetch(
-        // "https://kanban-task-board-api-gilt.vercel.app/api/auth/login",
-        "http://localhost:5000/api/auth/login",
+        "https://kanban-task-board-api-gilt.vercel.app/auth/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
