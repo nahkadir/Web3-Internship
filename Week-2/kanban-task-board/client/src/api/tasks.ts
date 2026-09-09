@@ -7,6 +7,7 @@ export interface CreateTaskInput {
   description?: string;
   priority: "low" | "medium" | "high";
   dueDate?: string;
+  assignedUser?: string;
 }
 
 export const createTask = async (
@@ -31,9 +32,28 @@ export const createTask = async (
   return result;
 };
 
-export const getTasks = async (token: string): Promise<Task[]> => {
-  const res = await fetch(BASE_URL, {
-    method: "GET",
+export interface TaskFilters {
+  priority?: string;
+  assignedTo?: string;
+  status?: string;
+  search?: string;
+  dueFrom?: string;
+  dueTo?: string;
+}
+
+export const getTasks = async (
+  token: string,
+  filters?: TaskFilters,
+): Promise<Task[]> => {
+  const params = new URLSearchParams();
+  if (filters?.priority) params.set("priority", filters.priority);
+  if (filters?.assignedTo) params.set("assignedTo", filters.assignedTo);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.search) params.set("search", filters.search);
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  const res = await fetch(`${BASE_URL}${query}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -54,6 +74,7 @@ export interface UpdateTaskInput {
   status?: "todo" | "in-progress" | "done";
   priority?: "low" | "medium" | "high";
   dueDate?: string;
+  assignedUser?: string;
 }
 
 export const updateTask = async (

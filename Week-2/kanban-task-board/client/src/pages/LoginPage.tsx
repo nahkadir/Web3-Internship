@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -11,14 +11,14 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
       const res = await fetch(
-        "https://kanban-task-board-api-gilt.vercel.app/api/auth/login",
+        "https://kanban-task-board-api-gilt.vercel.app/auth/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
