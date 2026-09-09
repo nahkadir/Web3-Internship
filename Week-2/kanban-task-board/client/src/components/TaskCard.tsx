@@ -46,19 +46,22 @@ const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
         {priority.label}
       </span>
 
-      <h3 className="text-text text-sm font-medium mt-3 leading-snug pr-4">
+      <h3 className="text-white text-sm font-medium mt-3 leading-snug pr-4">
         {task.title}
       </h3>
 
       {task.description && (
-        <p className="text-text-muted text-small mt-1.5 line-clamp-2">
+        <p className="text-white text-small mt-1.5 line-clamp-2">
           {task.description}
         </p>
       )}
 
       {task.dueDate && (
-        <p className="text-text-muted text-small mt-3">
-          Due {new Date(task.dueDate).toLocaleDateString()}
+        <p className="text-text text-small mt-3">
+          Due Date:{" "}
+          <span className="text-text-muted">
+            {new Date(task.dueDate).toLocaleDateString()}
+          </span>
         </p>
       )}
     </div>

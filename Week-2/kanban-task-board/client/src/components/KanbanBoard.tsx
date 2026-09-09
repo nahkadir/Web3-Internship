@@ -29,14 +29,16 @@ const KanbanBoard = ({
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${col.dot}`} />
-                <h2 className="text-text font-medium text-body">{col.label}</h2>
-                <span className="text-text-muted text-small bg-card px-2 py-0.5 rounded-md">
+                <h2 className="text-text font-medium text-body select-none">
+                  {col.label}
+                </h2>
+                <span className="text-white text-small bg-card px-2 py-0.5 rounded-md select-none">
                   {columnTasks.length}
                 </span>
               </div>
               <button
                 onClick={() => onAddClick(col.key)}
-                className="text-text-muted hover:text-text bg-card w-6 h-6 rounded-md flex items-center justify-center text-body cursor-pointer"
+                className="text-white hover:text-text bg-card w-6 h-6 rounded-md flex items-center justify-center text-body cursor-pointer"
               >
                 +
               </button>
