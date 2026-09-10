@@ -1,5 +1,6 @@
 import type { User } from "../../types.ts";
 import NotificationBell from "./NotificationBell";
+import { MdOutlineViewKanban } from "react-icons/md";
 
 interface SidebarProps {
   user: User;
@@ -44,12 +45,12 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
           </div>
         </div>
 
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-2">
           <div>
             <NotificationBell />
           </div>
-          <div className="px-3 py-2 rounded-lg bg-card text-text text-sm font-medium">
-            Dashboard
+          <div className="px-3 py-2 rounded-lg bg-card text-white text-sm flex gap-2">
+            <MdOutlineViewKanban size={20} /> Dashboard
           </div>
         </nav>
       </div>
@@ -68,7 +69,7 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
         </div>
         <button
           onClick={onLogout}
-          className="w-full text-left px-3 py-2 rounded-lg text-[#8B8D98] text-sm hover:bg-card hover:text-text transition-colors"
+          className="w-full cursor-pointer text-left px-3 py-2 rounded-lg text-[#8B8D98] text-sm hover:bg-card hover:text-text transition-colors"
         >
           Log out
         </button>

@@ -4,6 +4,9 @@ import type { Task } from "../../types";
 import type { TaskFilters } from "../api/tasks";
 import type { User } from "../api/users";
 import FilterBar from "./FilterBar";
+import { PiArrowsDownUpFill } from "react-icons/pi";
+import { FaSortAmountDown } from "react-icons/fa";
+import { GoPlus } from "react-icons/go";
 
 const columns = [
   { key: "todo", label: "TO DO", dot: "bg-status-todo" },
@@ -69,10 +72,10 @@ const KanbanBoard = ({
         <div className="relative">
           <button
             onClick={() => setShowFilters((v) => !v)}
-            className="flex items-center gap-2 b px-3 py-1 text-white hover:text-text text-small cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1 text-white hover:text-text text-body cursor-pointer"
           >
-            <span>⇅</span>
             Filter
+            <PiArrowsDownUpFill size={18} />
             {hasActiveFilters && (
               <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             )}
@@ -90,11 +93,13 @@ const KanbanBoard = ({
           )}
         </div>
         <div className="flex items-center gap-3">
-          <label className="text-white text-small">Sort by</label>
+          <label className="text-white text-body flex items-center gap-2">
+            Sort by <FaSortAmountDown />
+          </label>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="bg-card border border-border rounded-lg px-2 py-1 text-white text-small outline-none"
+            className="bg-card border border-border cursor-pointer rounded-lg px-2 py-1 text-white text-small outline-none"
           >
             <option value="dueDate">Due date</option>
             <option value="priority">Priority</option>
@@ -125,7 +130,7 @@ const KanbanBoard = ({
                   onClick={() => onAddClick(col.key)}
                   className="text-white hover:text-text bg-card w-6 h-6 rounded-md flex items-center justify-center text-body cursor-pointer"
                 >
-                  +
+                  <GoPlus />
                 </button>
               </div>
               <div className="flex flex-col gap-3">

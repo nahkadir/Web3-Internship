@@ -8,7 +8,7 @@ export interface ActivityEntry {
   createdAt: string;
 }
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
 
 export const getActivity = async (
   taskId: string,

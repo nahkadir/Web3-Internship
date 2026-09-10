@@ -8,7 +8,7 @@ export interface AppNotification {
   createdAt: string;
 }
 
-const BASE_URL = "http://localhost:5000/api/notifications";
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api/notifications`;
 
 export const getNotifications = async (
   token: string,

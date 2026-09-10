@@ -1,6 +1,6 @@
 import type { Task } from "../../types";
 
-const BASE_URL = "http://localhost:5000/api/tasks";
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api/tasks`;
 
 export interface CreateTaskInput {
   title: string;

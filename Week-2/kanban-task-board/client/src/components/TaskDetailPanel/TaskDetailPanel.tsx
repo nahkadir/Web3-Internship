@@ -69,9 +69,12 @@ const TaskDetailPanel = ({
     const fetchLatest = async () => {
       if (!token) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/tasks/${task._id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/tasks/${task._id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const data = await res.json();
         if (res.ok) {
           setTitle(data.title);
@@ -300,13 +303,13 @@ const TaskDetailPanel = ({
             <div className="flex gap-2 mt-2">
               <button
                 onClick={handleCancelEdit}
-                className="flex-1 border border-border text-text rounded-lg py-1.5 text-small"
+                className="flex-1 border border-gray-400/50 text-white cursor-pointer rounded-lg py-2 text-body"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="flex-1 bg-accent text-bg font-medium rounded-lg py-1.5 text-small"
+                className="flex-1 bg-button text-white cursor-pointer rounded-lg py-2 text-body"
               >
                 Save
               </button>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { RiNotification3Line } from "react-icons/ri";
 import {
   getNotifications,
   markAsRead,
@@ -65,8 +66,9 @@ const NotificationBell = () => {
     <div className="relative" ref={panelRef}>
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="relative flex w-full items-center hover:text-white px-3 py-2 rounded-lg cursor-pointer text-text text-sm font-medium"
+        className="relative flex w-full items-center gap-2 hover:text-white px-3 py-2 rounded-lg cursor-pointer text-text text-sm"
       >
+        <RiNotification3Line size={20} />
         Notification
         {unreadCount > 0 && (
           <span className="absolute right-0 bg-priority-high text-white text-small font-medium w-5 h-5 rounded-md flex items-center justify-center">
