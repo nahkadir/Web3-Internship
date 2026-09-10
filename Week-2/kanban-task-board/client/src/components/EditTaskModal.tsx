@@ -49,12 +49,9 @@ const EditTaskModal = ({
     const fetchLatest = async () => {
       if (!token) return;
       try {
-        const res = await fetch(
-          `https://kanban-task-board-api-gilt.vercel.app/api/tasks/${task._id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const res = await fetch(`http://localhost:5000/api/tasks/${task._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
         if (res.ok) {
           setTitle(data.title);

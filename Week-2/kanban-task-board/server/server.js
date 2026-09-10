@@ -5,6 +5,8 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js";
 
 connectDB();
 
@@ -18,6 +20,8 @@ app.use("/api/tasks", taskRoutes);
 // userRoutes.js says "when a GET request comes in at /, run protect first, then run getUsers.
 // server.js: app.use('/api/users', userRoutes): everything inside userRoutes gets prefixed with /api/users.
 app.use("/api/users", userRoutes);
+app.use("/api", commentRoutes);
+app.use("/api", activityRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "Server is running" });

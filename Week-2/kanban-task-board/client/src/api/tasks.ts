@@ -1,6 +1,6 @@
 import type { Task } from "../../types";
 
-const BASE_URL = "https://kanban-task-board-api-gilt.vercel.app/api/tasks";
+const BASE_URL = "http://localhost:5000/api/tasks";
 
 export interface CreateTaskInput {
   title: string;
