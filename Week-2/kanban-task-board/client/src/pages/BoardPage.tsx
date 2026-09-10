@@ -2,13 +2,11 @@ import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import KanbanBoard from "../components/KanbanBoard";
 import CreateTaskModal from "../components/CreateTaskModal";
-import EditTaskModal from "../components/EditTaskModal";
+import TaskDetailPanel from "../components/TaskDetailPanel/TaskDetailPanel";
 import Toast from "../components/Toast";
-import { getTasks, deleteTask } from "../api/tasks";
+import { getTasks, deleteTask, type TaskFilters } from "../api/tasks";
 import { useAuth } from "../context/AuthContext";
 import type { Task } from "../../types";
-import FilterBar from "../components/FilterBar";
-import { type TaskFilters } from "../api/tasks";
 import { getUsers, type User } from "../api/users";
 
 function BoardPage() {
@@ -18,12 +16,12 @@ function BoardPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [filters, setFilters] = useState<TaskFilters>({});
+
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
-
-  const [filters, setFilters] = useState<TaskFilters>({});
 
   useEffect(() => {
     if (!token) return;
@@ -35,7 +33,6 @@ function BoardPage() {
   useEffect(() => {
     const fetchTasks = async () => {
       if (!token) return;
-      setLoading(true);
       try {
         const data = await getTasks(token, filters);
         setTasks(data);
@@ -47,8 +44,6 @@ function BoardPage() {
     };
     fetchTasks();
   }, [token, filters]);
-
-  const handleClear = () => setFilters({});
 
   if (!user) return null;
 
@@ -87,12 +82,6 @@ function BoardPage() {
       <Sidebar user={user} onLogout={logout} />
       <main className="flex-1 p-8 overflow-y-auto">
         <h1 className="text-h1 font-semibold mb-6 text-white">Dashboard</h1>
-        <FilterBar
-          filters={filters}
-          onChange={setFilters}
-          onClear={handleClear}
-          users={users}
-        />
 
         {loading ? (
           <p className="text-text-muted text-body my-4">Loading tasks...</p>
@@ -102,6 +91,10 @@ function BoardPage() {
             onAddClick={() => setShowModal(true)}
             onTaskClick={(task) => setEditingTask(task)}
             onDeleteClick={handleDeleteClick}
+            filters={filters}
+            onFiltersChange={setFilters}
+            onClearFilters={() => setFilters({})}
+            users={users}
           />
         )}
       </main>
@@ -112,19 +105,22 @@ function BoardPage() {
           onCreated={handleTaskCreated}
         />
       )}
-
       {editingTask && (
-        <EditTaskModal
+        <TaskDetailPanel
           task={editingTask}
           onClose={() => setEditingTask(null)}
           onUpdated={handleTaskUpdated}
           onError={() => {
-            setToast({ message: "Failed to update task", type: "error" });
+            setToast({
+              message: "Failed to save changes — reverted",
+              type: "error",
+            });
             setTimeout(() => setToast(null), 3000);
           }}
-          onDelete={(task) => {
-            setEditingTask(null);
-            handleDeleteClick(task);
+          onDeleted={(task) => {
+            setTasks((prev) => prev.filter((t) => t._id !== task._id));
+            setToast({ message: "Task deleted", type: "success" });
+            setTimeout(() => setToast(null), 3000);
           }}
         />
       )}

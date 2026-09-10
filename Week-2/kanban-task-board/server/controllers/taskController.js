@@ -1,4 +1,6 @@
 import Task from "../models/Task.js";
+import { logActivity } from "./activityController.js";
+import { createNotification } from "./notificationController.js";
 
 export const getTasks = async (req, res) => {
   try {
@@ -63,6 +65,12 @@ export const createTask = async (req, res) => {
       owner: req.user._id,
     });
 
+    await logActivity({
+      task: task._id,
+      user: req.user._id,
+      action: "created",
+    });
+
     res.status(201).json(task);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -113,12 +121,96 @@ export const updateTask = async (req, res) => {
     const { title, description, status, priority, dueDate, assignedUser } =
       req.body;
 
-    if (title !== undefined) task.title = title;
-    if (description !== undefined) task.description = description;
-    if (status !== undefined) task.status = status;
-    if (priority !== undefined) task.priority = priority;
-    if (dueDate !== undefined) task.dueDate = dueDate;
-    if (assignedUser !== undefined) task.assignedUser = assignedUser;
+    if (title !== undefined && title !== task.title) {
+      task.title = title;
+    }
+
+    if (description !== undefined && description !== task.description) {
+      task.description = description;
+    }
+
+    if (status !== undefined && status !== task.status) {
+      await logActivity({
+        task: task._id,
+        user: req.user._id,
+        action: "status_changed",
+        previousValue: task.status,
+        newValue: status,
+      });
+
+      const notifyRecipient =
+        task.assignedUser &&
+        task.assignedUser.toString() !== req.user._id.toString()
+          ? task.assignedUser.toString()
+          : task.owner.toString() !== req.user._id.toString()
+            ? task.owner.toString()
+            : null;
+
+      if (notifyRecipient) {
+        await createNotification({
+          recipient: notifyRecipient,
+          type: "status_changed",
+          task: task._id,
+          message: `${req.user.name} changed "${task.title}" to ${status}`,
+        });
+      }
+
+      task.status = status;
+    }
+
+    if (priority !== undefined && priority !== task.priority) {
+      await logActivity({
+        task: task._id,
+        user: req.user._id,
+        action: "priority_changed",
+        previousValue: task.priority,
+        newValue: priority,
+      });
+      task.priority = priority;
+    }
+
+    if (
+      dueDate !== undefined &&
+      dueDate !==
+        (task.dueDate ? task.dueDate.toISOString().slice(0, 10) : null)
+    ) {
+      await logActivity({
+        task: task._id,
+        user: req.user._id,
+        action: "due_date_changed",
+        previousValue: task.dueDate
+          ? task.dueDate.toISOString().slice(0, 10)
+          : "None",
+        newValue: dueDate || "None",
+      });
+      task.dueDate = dueDate;
+    }
+
+    if (
+      assignedUser !== undefined &&
+      assignedUser !== (task.assignedUser ? task.assignedUser.toString() : null)
+    ) {
+      await logActivity({
+        task: task._id,
+        user: req.user._id,
+        action: "assigned",
+        previousValue: task.assignedUser
+          ? task.assignedUser.toString()
+          : "Unassigned",
+        newValue: assignedUser || "Unassigned",
+      });
+
+      if (assignedUser && assignedUser !== req.user._id.toString()) {
+        await createNotification({
+          recipient: assignedUser,
+          type: "assigned",
+          task: task._id,
+          message: `${req.user.name} assigned you a task: "${task.title}"`,
+        });
+      }
+
+      task.assignedUser = assignedUser;
+    }
 
     const updatedTask = await task.save();
     res.status(200).json(updatedTask);
@@ -141,6 +233,12 @@ export const deleteTask = async (req, res) => {
         .status(403)
         .json({ message: "Not authorized to delete this task" });
     }
+
+    await logActivity({
+      task: task._id,
+      user: req.user._id,
+      action: "deleted",
+    });
 
     await task.deleteOne();
     res.status(200).json({ message: "Task deleted successfully" });
