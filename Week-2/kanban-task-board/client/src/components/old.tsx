@@ -1,8 +1,18 @@
+// Reminder Day 5: Must refactor this code into smaller components, the file has grown to a large size & is difficult to read
+
 import { useState, useEffect, useRef } from "react";
 import { updateTask, deleteTask } from "../api/tasks";
 import { getUsers, type User } from "../api/users";
 import { useAuth } from "../context/AuthContext";
 import type { Task } from "../../types";
+import {
+  getComments,
+  createComment,
+  updateComment,
+  deleteComment,
+  type Comment,
+} from "../api/comments";
+import { getActivity, type ActivityEntry } from "../api/activity";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -24,6 +34,25 @@ const statusLabels = {
   todo: "To Do",
   "in-progress": "In Progress",
   done: "Done",
+};
+
+const activityLabels: Record<string, string> = {
+  created: "created this task",
+  assigned: "changed the assignee",
+  status_changed: "changed the status",
+  priority_changed: "changed the priority",
+  due_date_changed: "changed the due date",
+  updated: "updated this task",
+  comment_added: "added a comment",
+  deleted: "deleted this task",
+};
+
+const formatActivity = (entry: ActivityEntry) => {
+  const label = activityLabels[entry.action] || entry.action;
+  if (entry.previousValue && entry.newValue) {
+    return `${label}: ${entry.previousValue} → ${entry.newValue}`;
+  }
+  return label;
 };
 
 const TaskDetailPanel = ({
@@ -48,7 +77,13 @@ const TaskDetailPanel = ({
   const [assignedUser, setAssignedUser] = useState(task.assignedUser || "");
   const [users, setUsers] = useState<User[]>([]);
 
-  const { token } = useAuth();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const { user, token } = useAuth();
+
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -95,6 +130,32 @@ const TaskDetailPanel = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!token) return;
+      try {
+        const data = await getComments(task._id, token);
+        setComments(data);
+      } catch (err) {
+        // Non-critical, comments tab just stays empty
+      }
+    };
+    fetchComments();
+  }, [task._id, token]);
+
+  useEffect(() => {
+    const fetchActivity = async () => {
+      if (!token) return;
+      try {
+        const data = await getActivity(task._id, token);
+        setActivity(data);
+      } catch (err) {
+        // Non-critical
+      }
+    };
+    fetchActivity();
+  }, [task._id, token]);
 
   const assignedUserName = users.find((u) => u._id === assignedUser)?.name;
 
@@ -154,6 +215,42 @@ const TaskDetailPanel = ({
       await deleteTask(task._id, token);
       onDeleted(task);
       onClose();
+    } catch (err) {
+      onError();
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !token) return;
+    try {
+      const comment = await createComment(task._id, newComment, token);
+      setComments((prev) => [...prev, comment]);
+      setNewComment("");
+    } catch (err) {
+      onError();
+    }
+  };
+
+  const handleUpdateComment = async (commentId: string) => {
+    if (!editingContent.trim() || !token) return;
+    try {
+      const updated = await updateComment(commentId, editingContent, token);
+      setComments((prev) =>
+        prev.map((c) => (c._id === commentId ? updated : c)),
+      );
+      setEditingCommentId(null);
+    } catch (err) {
+      onError();
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!token) return;
+    const confirmed = window.confirm("Delete this comment?");
+    if (!confirmed) return;
+    try {
+      await deleteComment(commentId, token);
+      setComments((prev) => prev.filter((c) => c._id !== commentId));
     } catch (err) {
       onError();
     }
@@ -343,14 +440,114 @@ const TaskDetailPanel = ({
               </p>
             ))}
 
+          {/* COMMENTS */}
+
           {activeTab === "comments" && (
-            <p className="text-text-muted text-small">Comments coming soon</p>
+            <div className="flex flex-col gap-4">
+              {comments.length === 0 ? (
+                <p className="text-text-muted text-small">No comments yet</p>
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment._id} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-text text-small font-medium">
+                        {comment.author.name}
+                      </span>
+                      <span className="text-text-muted text-small">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+
+                    {editingCommentId === comment._id ? (
+                      <div className="flex flex-col gap-2">
+                        <textarea
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          rows={2}
+                          className="bg-bg border border-border rounded-lg px-3 py-2 text-text text-body outline-none resize-none"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setEditingCommentId(null)}
+                            className="text-text-muted text-small"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleUpdateComment(comment._id)}
+                            className="text-accent text-small font-medium"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-text-muted text-body">
+                          {comment.content}
+                        </p>
+                        {user && comment.author._id === user._id && (
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => {
+                                setEditingCommentId(comment._id);
+                                setEditingContent(comment.content);
+                              }}
+                              className="text-text-muted hover:text-text text-small"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteComment(comment._id)}
+                              className="text-text-muted hover:text-priority-high text-small"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))
+              )}
+
+              <div className="flex gap-2 mt-2 pt-4 border-t border-border">
+                <input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="flex-1 bg-bg border border-border rounded-lg px-3 py-2 text-text text-body outline-none focus:border-border-hover"
+                />
+                <button
+                  onClick={handleAddComment}
+                  className="bg-accent text-bg font-medium rounded-lg px-4 py-2 text-body"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
           )}
 
           {activeTab === "activity" && (
-            <p className="text-text-muted text-small">
-              Activity history coming soon
-            </p>
+            <div className="flex flex-col gap-3">
+              {activity.length === 0 ? (
+                <p className="text-text-muted text-small">No activity yet</p>
+              ) : (
+                activity.map((entry) => (
+                  <div key={entry._id} className="flex flex-col gap-0.5">
+                    <p className="text-text-muted text-small">
+                      <span className="text-text font-medium">
+                        {entry.user.name}
+                      </span>{" "}
+                      {formatActivity(entry)}
+                    </p>
+                    <span className="text-text-muted text-small opacity-60">
+                      {new Date(entry.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
       </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import KanbanBoard from "../components/KanbanBoard";
 import CreateTaskModal from "../components/CreateTaskModal";
-import TaskDetailPanel from "../components/TaskDetailPanel";
+import TaskDetailPanel from "../components/TaskDetailPanel/TaskDetailPanel";
 import Toast from "../components/Toast";
 import { getTasks, deleteTask, type TaskFilters } from "../api/tasks";
 import { useAuth } from "../context/AuthContext";
