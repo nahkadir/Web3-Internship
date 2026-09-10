@@ -1,4 +1,5 @@
 import type { User } from "../../types.ts";
+import NotificationBell from "./NotificationBell";
 
 interface SidebarProps {
   user: User;
@@ -44,6 +45,9 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
         </div>
 
         <nav className="flex flex-col gap-1">
+          <div>
+            <NotificationBell />
+          </div>
           <div className="px-3 py-2 rounded-lg bg-card text-text text-sm font-medium">
             Dashboard
           </div>
