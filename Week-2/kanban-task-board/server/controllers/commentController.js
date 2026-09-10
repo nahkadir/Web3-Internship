@@ -1,6 +1,7 @@
 import Comment from "../models/Comment.js";
 import Task from "../models/Task.js";
 import { logActivity } from "./activityController.js";
+import { createNotification } from "./notificationController.js";
 
 const hasTaskAccess = (task, userId) => {
   const isOwner = task.owner.toString() === userId.toString();
@@ -60,6 +61,20 @@ export const createComment = async (req, res) => {
       user: req.user._id,
       action: "comment_added",
     });
+
+    const notifyRecipients = [
+      task.owner.toString(),
+      task.assignedUser?.toString(),
+    ].filter((id) => id && id !== req.user._id.toString());
+
+    for (const recipientId of notifyRecipients) {
+      await createNotification({
+        recipient: recipientId,
+        type: "comment_added",
+        task: task._id,
+        message: `${req.user.name} commented on "${task.title}"`,
+      });
+    }
 
     const populated = await comment.populate("author", "name email");
 

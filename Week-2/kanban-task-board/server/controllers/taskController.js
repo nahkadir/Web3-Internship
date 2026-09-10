@@ -1,5 +1,6 @@
 import Task from "../models/Task.js";
 import { logActivity } from "./activityController.js";
+import { createNotification } from "./notificationController.js";
 
 export const getTasks = async (req, res) => {
   try {
@@ -136,6 +137,24 @@ export const updateTask = async (req, res) => {
         previousValue: task.status,
         newValue: status,
       });
+
+      const notifyRecipient =
+        task.assignedUser &&
+        task.assignedUser.toString() !== req.user._id.toString()
+          ? task.assignedUser.toString()
+          : task.owner.toString() !== req.user._id.toString()
+            ? task.owner.toString()
+            : null;
+
+      if (notifyRecipient) {
+        await createNotification({
+          recipient: notifyRecipient,
+          type: "status_changed",
+          task: task._id,
+          message: `${req.user.name} changed "${task.title}" to ${status}`,
+        });
+      }
+
       task.status = status;
     }
 
@@ -180,6 +199,16 @@ export const updateTask = async (req, res) => {
           : "Unassigned",
         newValue: assignedUser || "Unassigned",
       });
+
+      if (assignedUser && assignedUser !== req.user._id.toString()) {
+        await createNotification({
+          recipient: assignedUser,
+          type: "assigned",
+          task: task._id,
+          message: `${req.user.name} assigned you a task: "${task.title}"`,
+        });
+      }
+
       task.assignedUser = assignedUser;
     }
 
