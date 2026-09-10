@@ -111,3 +111,61 @@ Completed the full REST surface for tasks (`server/routes/taskRoutes.js`, `serve
 - Verified unauthenticated requests to all task endpoints are blocked
 
 Day 2 is complete: authenticated users can create, view, edit, delete, and move tasks between columns, with all changes persisted to the database and protected by ownership checks throughout.
+
+# Kanban Task Board - Day 3
+
+## Task assignment & visibility
+
+- Extended task ownership beyond the creator by adding a `GET /api/users` endpoint returning all registered users
+- Added an assignee dropdown to both `CreateTaskModal.tsx` and `EditTaskModal.tsx`
+- Updated authorization: creator **or** assignee may edit/move a task; only the creator may delete it
+- Updated `getTasks` to return tasks where the user is either the owner or the assignee (`$or` query), so assigned tasks are visible to the assignee, not just the creator
+- A task assigned to a second user is visible to them, editable by them, but not deletable by them
+
+## Filtering, search & query-param API
+
+- Extended `GET /api/tasks` to accept query params — `priority`, `assignedTo`, `status`, `search`
+- Search matches title or description, case-insensitive, via a MongoDB `$regex` query
+- All filters combine with AND logic
+- Built a filter bar with priority, status, and assignee dropdowns, a search input, and a Clear Filters action
+
+## Sorting within columns
+
+- Added a global "Sort by" control `KanbanBoard.tsx`: due date, priority, or recently updated
+- Sorting is applied independently within each column before rendering, via a `sortTasks()` helper
+- Purely client-side - no backend changes required
+
+## Due date awareness
+
+- Added visual urgency indicators to task cards `TaskCard.tsx`
+- Overdue tasks (past due date, not marked Done) show a soft red ring & tasks due within 48 hours show amber versions
+- Recalculated on every render, so indicators stay accurate immediately after an edit or status change
+
+## Status updates with optimistic UI
+
+- Upgraded the existing status-change flow (via `EditTaskModal`'s status dropdown) to update optimistically where the board reflects the change and the modal closes immediately, before the API call resolves
+- On failure, the change is rolled back to the task's previous state and an error toast is shown
+
+## Task detail view
+
+- Clicking a task card opens `EditTaskModal.tsx`, which now fetches the latest task data via `GET /api/tasks/:id` on open (rather than relying solely on already-loaded local state)
+- Supports the same edit and delete actions available on the board, using `GET /tasks/:id` and `PUT /tasks/:id`
+- Cancel discards any unsaved changes without persisting them
+
+## API enhancements
+
+- `GET /api/tasks` now supports `?priority=&assignedTo=&status=&search=` query params
+- Added `GET /api/users` for assignee selection
+- All endpoints continue to enforce authentication (`protect` middleware), input validation, proper status codes, and ownership/assignment-aware authorization
+
+## Day 3 testing
+
+- Verified filters return correct, combined results (tested individually and in combination)
+- Verified sorting reorders tasks correctly within each column
+- Verified overdue/due-soon indicators display accurately and update after edits
+- Verified optimistic status updates reflect immediately and roll back cleanly on a forced failure
+- Verified the task detail view fetches fresh data, saves changes correctly, and discards changes on cancel
+- Verified assignment respects authorization — an uninvolved user cannot edit or delete a task they're not the owner or assignee of
+- Re-verified Day 2's core CRUD and ownership rules still hold (regression check)
+
+Day 3 is complete: the board now supports multi-user task assignment with correct visibility and authorization rules, full filtering and search, per-column sorting, due-date urgency indicators, optimistic status updates with rollback, and a task detail view backed by the `GET /tasks/:id` endpoint.
