@@ -69,7 +69,7 @@ const KanbanBoard = ({
         <div className="relative">
           <button
             onClick={() => setShowFilters((v) => !v)}
-            className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-1 text-white hover:text-text text-small"
+            className="flex items-center gap-2 b px-3 py-1 text-white hover:text-text text-small cursor-pointer"
           >
             <span>⇅</span>
             Filter
