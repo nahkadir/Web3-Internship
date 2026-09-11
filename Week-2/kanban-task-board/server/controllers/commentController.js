@@ -10,7 +10,7 @@ const hasTaskAccess = (task, userId) => {
   return isOwner || isAssignee;
 };
 
-export const getComments = async (req, res) => {
+export const getComments = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) {
@@ -28,11 +28,11 @@ export const getComments = async (req, res) => {
 
     res.status(200).json(comments);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
-export const createComment = async (req, res) => {
+export const createComment = async (req, res, next) => {
   try {
     const { content } = req.body;
 
@@ -80,11 +80,11 @@ export const createComment = async (req, res) => {
 
     res.status(201).json(populated);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
-export const updateComment = async (req, res) => {
+export const updateComment = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.id);
     if (!comment) {
@@ -107,11 +107,11 @@ export const updateComment = async (req, res) => {
 
     res.status(200).json(populated);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
-export const deleteComment = async (req, res) => {
+export const deleteComment = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.id);
     if (!comment) {
@@ -126,6 +126,6 @@ export const deleteComment = async (req, res) => {
     await comment.deleteOne();
     res.status(200).json({ message: "Comment deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };

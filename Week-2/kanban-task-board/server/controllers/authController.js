@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 
 // REGISTER USER
-export const registerUser = async (req, res) => {
+export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
@@ -38,17 +38,12 @@ export const registerUser = async (req, res) => {
       token,
     });
   } catch (err) {
-    // Database connection problem
-    // bcrypt error
-    // MongoDB error
-    // etc.
-    // 500 Internal Server Error
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
 // LOGIN USER
-export const loginUser = async (req, res) => {
+export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -77,7 +72,7 @@ export const loginUser = async (req, res) => {
       token,
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 

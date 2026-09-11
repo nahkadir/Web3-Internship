@@ -3,7 +3,7 @@ import Notification from "../models/Notification.js";
 // three real route handlers (getNotifications, markAsRead, markAllAsRead)
 // one plain helper (createNotification) meant to be called from other controllers & not wired to a route itself.
 
-export const getNotifications = async (req, res) => {
+export const getNotifications = async (req, res, next) => {
   try {
     const notifications = await Notification.find({ recipient: req.user._id })
       .populate("task", "title")
@@ -11,11 +11,11 @@ export const getNotifications = async (req, res) => {
 
     res.status(200).json(notifications);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
-export const markAsRead = async (req, res) => {
+export const markAsRead = async (req, res, next) => {
   try {
     const notification = await Notification.findById(req.params.id);
 
@@ -31,11 +31,11 @@ export const markAsRead = async (req, res) => {
 
     res.status(200).json(notification);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
-export const markAllAsRead = async (req, res) => {
+export const markAllAsRead = async (req, res, next) => {
   try {
     await Notification.updateMany(
       { recipient: req.user._id, read: false },
@@ -44,7 +44,7 @@ export const markAllAsRead = async (req, res) => {
 
     res.status(200).json({ message: "All notifications marked as read" });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 

@@ -1,10 +1,9 @@
 import { useState, type SyntheticEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Link } from "react-router-dom";
 
-const LoginPage = () => {
-  console.log(import.meta.env.VITE_API_URL);
+const RegisterPage = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -13,25 +12,25 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: SyntheticEvent) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        `${import.meta.env.VITE_API_URL}/api/auth/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ name, email, password }),
         },
       );
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Login failed");
+        setError(data.message || "Registration failed");
         return;
       }
 
@@ -58,13 +57,23 @@ const LoginPage = () => {
           onSubmit={handleSubmit}
           className="bg-card border border-border rounded-xl p-6 flex flex-col gap-4"
         >
-          <h1 className="text-text text-h4 font-medium mb-1">Log in</h1>
+          <h1 className="text-text text-h4 font-medium mb-1">Create account</h1>
 
           {error && (
             <p className="text-priority-high text-small bg-priority-high/10 rounded-md px-3 py-2">
               {error}
             </p>
           )}
+
+          <div className="flex flex-col gap-1">
+            <label className="text-text-muted text-small">Name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="bg-bg border border-border rounded-lg px-3 py-2 text-text text-body outline-none focus:border-border-hover"
+            />
+          </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-text-muted text-small">Email</label>
@@ -84,6 +93,7 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
               className="bg-bg border border-border rounded-lg px-3 py-2 text-text text-body outline-none focus:border-border-hover"
             />
           </div>
@@ -93,14 +103,13 @@ const LoginPage = () => {
             disabled={loading}
             className="bg-accent text-bg font-medium rounded-lg py-2 mt-2 disabled:opacity-60"
           >
-            {loading ? "Logging in..." : "Log in"}
+            {loading ? "Creating account..." : "Create account"}
           </button>
 
-          {/* Sign up */}
           <p className="text-text-muted text-small text-center mt-2">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-accent">
-              Sign up
+            Already have an account?{" "}
+            <Link to="/login" className="text-accent">
+              Log in
             </Link>
           </p>
         </form>
@@ -109,4 +118,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

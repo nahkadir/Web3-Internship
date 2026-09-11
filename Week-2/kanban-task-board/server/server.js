@@ -8,11 +8,19 @@ import userRoutes from "./routes/userRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 connectDB();
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://kanban-task-board-lemon.vercel.app",
+    ],
+  }),
+);
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
@@ -24,6 +32,8 @@ app.use("/api/users", userRoutes);
 app.use("/api", commentRoutes);
 app.use("/api", activityRoutes);
 app.use("/api/notifications", notificationRoutes);
+
+app.use(errorHandler);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "Server is running" });

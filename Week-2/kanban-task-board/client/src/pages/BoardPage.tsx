@@ -17,6 +17,7 @@ function BoardPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [filters, setFilters] = useState<TaskFilters>({});
+  const [defaultStatus, setDefaultStatus] = useState<Task["status"]>("todo");
 
   const [toast, setToast] = useState<{
     message: string;
@@ -88,7 +89,10 @@ function BoardPage() {
         ) : (
           <KanbanBoard
             tasks={tasks}
-            onAddClick={() => setShowModal(true)}
+            onAddClick={(status) => {
+              setDefaultStatus(status);
+              setShowModal(true);
+            }}
             onTaskClick={(task) => setEditingTask(task)}
             onDeleteClick={handleDeleteClick}
             filters={filters}
@@ -103,6 +107,7 @@ function BoardPage() {
         <CreateTaskModal
           onClose={() => setShowModal(false)}
           onCreated={handleTaskCreated}
+          defaultStatus={defaultStatus}
         />
       )}
       {editingTask && (
@@ -110,9 +115,9 @@ function BoardPage() {
           task={editingTask}
           onClose={() => setEditingTask(null)}
           onUpdated={handleTaskUpdated}
-          onError={() => {
+          onError={(message) => {
             setToast({
-              message: "Failed to save changes — reverted",
+              message: message || "Failed to save changes — reverted",
               type: "error",
             });
             setTimeout(() => setToast(null), 3000);
