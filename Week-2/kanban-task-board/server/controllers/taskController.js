@@ -3,7 +3,7 @@ import { logActivity } from "./activityController.js";
 import { createNotification } from "./notificationController.js";
 import User from "../models/User.js";
 
-export const getTasks = async (req, res) => {
+export const getTasks = async (req, res, next) => {
   try {
     const { priority, assignedTo, status, search, dueFrom, dueTo } = req.query;
 
@@ -42,12 +42,12 @@ export const getTasks = async (req, res) => {
     const tasks = await Task.find(filter);
     res.status(200).json(tasks);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
 // creates a new task, automatically owned by the logged-in user
-export const createTask = async (req, res) => {
+export const createTask = async (req, res, next) => {
   try {
     const { title, description, status, priority, dueDate, assignedUser } =
       req.body;
@@ -74,20 +74,24 @@ export const createTask = async (req, res) => {
 
     res.status(201).json(task);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
 // returns one specific task by its id, only if the logged-in user owns it
-export const getTaskById = async (req, res) => {
+export const getTaskById = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
+    const isOwner = task.owner.toString() === req.user._id.toString();
+    const isAssignee =
+      task.assignedUser &&
+      task.assignedUser.toString() === req.user._id.toString();
 
-    if (task.owner.toString() !== req.user._id.toString()) {
+    if (!isOwner && !isAssignee) {
       return res
         .status(403)
         .json({ message: "Not authorized to view this task" });
@@ -95,12 +99,12 @@ export const getTaskById = async (req, res) => {
 
     res.status(200).json(task);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
 // edits an existing task's fields, only if the logged-in user owns it
-export const updateTask = async (req, res) => {
+export const updateTask = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
 
@@ -219,12 +223,12 @@ export const updateTask = async (req, res) => {
     const updatedTask = await task.save();
     res.status(200).json(updatedTask);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
 // removes a task permanently, only if the logged-in user owns it
-export const deleteTask = async (req, res) => {
+export const deleteTask = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
 
@@ -247,6 +251,6 @@ export const deleteTask = async (req, res) => {
     await task.deleteOne();
     res.status(200).json({ message: "Task deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };

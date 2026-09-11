@@ -8,7 +8,7 @@ const hasTaskAccess = (task, userId) => {
   return isOwner || isAssignee;
 };
 
-export const getActivity = async (req, res) => {
+export const getActivity = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) {
@@ -26,7 +26,7 @@ export const getActivity = async (req, res) => {
 
     res.status(200).json(activity);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    next(err);
   }
 };
 
