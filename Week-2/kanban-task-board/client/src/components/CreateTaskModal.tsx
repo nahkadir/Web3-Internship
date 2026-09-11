@@ -13,12 +13,12 @@ interface CreateTaskModalProps {
 const CreateTaskModal = ({
   onClose,
   onCreated,
-  // defaultStatus,
+  defaultStatus,
 }: CreateTaskModalProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
-  // const [status, setStatus] = useState<Task["status"]>(defaultStatus);
+  const status = defaultStatus;
   const [dueDate, setDueDate] = useState("");
   const [assignedUser, setAssignedUser] = useState("");
   const [users, setUsers] = useState<User[]>([]);
@@ -58,7 +58,7 @@ const CreateTaskModal = ({
           title,
           description,
           priority,
-          // status,
+          status,
           dueDate: dueDate || undefined,
           assignedUser: assignedUser || undefined,
         },
