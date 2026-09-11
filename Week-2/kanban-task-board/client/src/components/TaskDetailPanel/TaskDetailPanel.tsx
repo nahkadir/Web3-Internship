@@ -50,6 +50,9 @@ const TaskDetailPanel = ({
   const [assignedUser, setAssignedUser] = useState(task.assignedUser || "");
   const [users, setUsers] = useState<User[]>([]);
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const { token } = useAuth();
 
   useEffect(() => {
@@ -104,7 +107,8 @@ const TaskDetailPanel = ({
   const assignedUserName = users.find((u) => u._id === assignedUser)?.name;
 
   const handleSave = async () => {
-    if (!token) return;
+    if (!token || isSaving) return;
+    setIsSaving(true);
 
     const optimisticTask: Task = {
       ...task,
@@ -136,6 +140,8 @@ const TaskDetailPanel = ({
       onUpdated(task);
       onError();
     }
+
+    setIsSaving(false);
   };
 
   const handleCancelEdit = () => {
@@ -149,12 +155,12 @@ const TaskDetailPanel = ({
   };
 
   const handleDelete = async () => {
-    if (!token) return;
+    if (!token || isDeleting) return;
     const confirmed = window.confirm(
       `Delete "${task.title}"? This can't be undone.`,
     );
     if (!confirmed) return;
-
+    setIsDeleting(true);
     try {
       await deleteTask(task._id, token);
       onDeleted(task);
@@ -309,9 +315,10 @@ const TaskDetailPanel = ({
               </button>
               <button
                 onClick={handleSave}
+                disabled={isSaving}
                 className="flex-1 bg-button text-white cursor-pointer rounded-lg py-2 text-body"
               >
-                Save
+                {isSaving ? "Saving..." : "Save"}
               </button>
             </div>
           )}
