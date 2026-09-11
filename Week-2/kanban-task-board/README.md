@@ -169,3 +169,74 @@ Day 2 is complete: authenticated users can create, view, edit, delete, and move 
 - Re-verified Day 2's core CRUD and ownership rules still hold (regression check)
 
 Day 3 is complete: the board now supports multi-user task assignment with correct visibility and authorization rules, full filtering and search, per-column sorting, due-date urgency indicators, optimistic status updates with rollback, and a task detail view backed by the `GET /tasks/:id` endpoint.
+
+# Kanban Task Board - Day 4
+
+## Task detail view redesign
+
+- Replaced the compact edit modal with a right-side slide-out panel `TaskDetailPanel.tsx`
+- Panel shows title, assignee, status, due date, and priority as read-only rows by default
+- A pencil icon toggles all field rows into inline edit mode simultaneously, with Save/Cancel actions
+- A "⋯" menu holds the Delete action, keeping destructive actions tucked away rather than always visible
+- Panel fetches the latest task data via `GET /api/tasks/:id` on open, rather than relying solely on already-loaded local state
+- Split into a `TaskDetailPanel/` folder with `TaskComments.tsx` and `TaskActivity.tsx` as separate, self-contained components once the file grew large enough to warrant it
+
+## Task comments
+
+- Added a Comment model (`server/models/Comment.js`) referencing both the task and the author
+- Built full comment CRUD (`server/controllers/commentController.js`, `server/routes/commentRoutes.js`):
+  - `POST /api/tasks/:id/comments` — add a comment
+  - `GET /api/tasks/:id/comments` — list comments in chronological order, with author populated
+  - `PUT /api/comments/:id` — edit (author-only)
+  - `DELETE /api/comments/:id` — delete (author-only)
+- Authorization: only users with access to the task (owner or assignee) can view or add comments; only a comment's author can edit or delete it
+- Frontend Comments tab `TaskComments.tsx`` displays author, content, and timestamp, with inline edit/delete shown only on the current user's own comments
+- Comment content is validated as non-empty before submission, both client and server-side
+
+## Task activity history
+
+- Added an Activity model recording task, user, action type, previous/new values, and timestamp
+- `GET /api/tasks/:id/activity` returns entries newest-first, with the acting user populated
+- A `logActivity()` helper is called from inside existing controllers whenever something activity-worthy happens: task creation, status/priority/due-date/assignment changes (with before/after values), task deletion, and new comments
+- Assignment changes resolve user IDs to actual names before logging, so entries read as "changed the assignee: Unassigned → Rida" rather than raw database IDs
+
+## Notifications
+
+- Added a Notification model with recipient, type, related task, message, and read status
+- Endpoints (`server/controllers/notificationController.js`, `server/routes/notificationRoutes.js`):
+  - `GET /api/notifications` — the current user's notifications, newest first
+  - `PUT /api/notifications/:id/read` — mark one as read (recipient-only)
+  - `PUT /api/notifications/read-all` — mark all of the current user's unread notifications as read
+- A `createNotification()` helper triggers from `updateTask` (on assignment and on status change, notifying whichever party didn't make the change) and from `createComment` (notifying the task's owner and/or assignee, excluding the commenter)
+- Frontend notification bell (`client/src/components/NotificationBell.tsx`) lives in the sidebar, showing an unread-count badge and a dropdown list; clicking an unread notification marks it read, with a "mark all read" action
+
+## Board interaction improvements
+
+- Loading states already present on initial task fetch and on in-panel saves
+- Empty-state messaging already present for columns with no tasks
+- Confirmation dialogs present before deleting both tasks and comments
+- Verified filters and sort selection persist correctly through task edits, since both live in state independent of the edit flow
+- Added duplicate-request guards (`isSaving`, `isDeleting`, `isSubmitting` flags) on task save, task delete, and comment submission, disabling the relevant buttons while a request is in flight
+
+## Optimistic updates & rollback
+
+- Status, priority, due date, and assignment changes in the task detail panel already update optimistically as one unit - the panel closes and the board reflects the change immediately, before the API call resolves
+- On failure, the task is rolled back to its previous state and an error toast is shown
+- Delete intentionally remains non-optimistic (confirm, then wait for the server) per the spec's caution against optimistic updates for unsafe/destructive changes
+
+## API enhancements
+
+- Comments: `POST/GET /api/tasks/:id/comments`, `PUT/DELETE /api/comments/:id`
+- Activity: `GET /api/tasks/:id/activity`
+- Notifications: `GET /api/notifications`, `PUT /api/notifications/:id/read`, `PUT /api/notifications/read-all`
+- All new endpoints enforce authentication via the existing `protect` middleware, proper status codes, and authorization rules appropriate to each resource (task access for comments/activity, recipient-only for notifications, author-only for comment edits/deletes)
+
+## Day 4 testing
+
+- Ran the full spec scenario end-to-end: User A created and assigned a task, User B updated its status and added a comment, User A viewed the comment and activity history, priority and due date changes were verified in the activity log, and relevant notifications were generated and marked as read
+- Verified an uninvolved user cannot access task details, add comments, or modify another user's notifications
+- Verified users can only edit/delete their own comments
+- Verified a forced API failure during a task update rolls back the optimistic UI change correctly
+- Re-verified Day 2 and Day 3 functionality (CRUD, ownership, filtering, sorting, urgency indicators) still holds
+
+Day 4 is complete: the board now supports task comments with author-scoped editing, a full activity history logged across task and comment actions, an in-app notification system with unread tracking, and more resilient board interactions with guarded requests and consistent optimistic-update behavior.

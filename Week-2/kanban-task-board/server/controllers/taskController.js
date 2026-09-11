@@ -1,6 +1,7 @@
 import Task from "../models/Task.js";
 import { logActivity } from "./activityController.js";
 import { createNotification } from "./notificationController.js";
+import User from "../models/User.js";
 
 export const getTasks = async (req, res) => {
   try {
@@ -190,14 +191,17 @@ export const updateTask = async (req, res) => {
       assignedUser !== undefined &&
       assignedUser !== (task.assignedUser ? task.assignedUser.toString() : null)
     ) {
+      const previousUser = task.assignedUser
+        ? await User.findById(task.assignedUser)
+        : null;
+      const newUser = assignedUser ? await User.findById(assignedUser) : null;
+
       await logActivity({
         task: task._id,
         user: req.user._id,
         action: "assigned",
-        previousValue: task.assignedUser
-          ? task.assignedUser.toString()
-          : "Unassigned",
-        newValue: assignedUser || "Unassigned",
+        previousValue: previousUser ? previousUser.name : "Unassigned",
+        newValue: newUser ? newUser.name : "Unassigned",
       });
 
       if (assignedUser && assignedUser !== req.user._id.toString()) {

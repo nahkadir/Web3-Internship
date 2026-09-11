@@ -19,6 +19,7 @@ const TaskComments = ({ taskId, onError }: TaskCommentsProps) => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const { user, token } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -34,13 +35,16 @@ const TaskComments = ({ taskId, onError }: TaskCommentsProps) => {
   }, [taskId, token]);
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || !token) return;
+    if (!newComment.trim() || !token || isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const comment = await createComment(taskId, newComment, token);
       setComments((prev) => [...prev, comment]);
       setNewComment("");
     } catch (err) {
       onError();
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -145,9 +149,10 @@ const TaskComments = ({ taskId, onError }: TaskCommentsProps) => {
         />
         <button
           onClick={handleAddComment}
+          disabled={isSubmitting}
           className="bg-button text-white font-medium rounded-lg px-4 py-2 text-body cursor-pointer"
         >
-          Send
+          {isSubmitting ? "..." : "Send"}
         </button>
       </div>
     </div>
