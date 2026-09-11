@@ -7,12 +7,18 @@ import type { Task } from "../../types";
 interface CreateTaskModalProps {
   onClose: () => void;
   onCreated: (task: Task) => void;
+  defaultStatus: Task["status"];
 }
 
-const CreateTaskModal = ({ onClose, onCreated }: CreateTaskModalProps) => {
+const CreateTaskModal = ({
+  onClose,
+  onCreated,
+  defaultStatus,
+}: CreateTaskModalProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [status, setStatus] = useState<Task["status"]>(defaultStatus);
   const [dueDate, setDueDate] = useState("");
   const [assignedUser, setAssignedUser] = useState("");
   const [users, setUsers] = useState<User[]>([]);
@@ -52,6 +58,7 @@ const CreateTaskModal = ({ onClose, onCreated }: CreateTaskModalProps) => {
           title,
           description,
           priority,
+          status,
           dueDate: dueDate || undefined,
           assignedUser: assignedUser || undefined,
         },

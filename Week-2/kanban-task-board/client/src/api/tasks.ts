@@ -6,6 +6,7 @@ export interface CreateTaskInput {
   title: string;
   description?: string;
   priority: "low" | "medium" | "high";
+  status?: Task["status"];
   dueDate?: string;
   assignedUser?: string;
 }

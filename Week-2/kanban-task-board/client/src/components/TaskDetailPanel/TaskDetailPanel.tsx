@@ -10,7 +10,7 @@ interface TaskDetailPanelProps {
   task: Task;
   onClose: () => void;
   onUpdated: (task: Task) => void;
-  onError: () => void;
+  onError: (message?: string) => void;
   onDeleted: (task: Task) => void;
 }
 
@@ -55,6 +55,8 @@ const TaskDetailPanel = ({
 
   const { token } = useAuth();
 
+  const [usersLoading, setUsersLoading] = useState(true);
+
   useEffect(() => {
     const fetchUsers = async () => {
       if (!token) return;
@@ -63,6 +65,8 @@ const TaskDetailPanel = ({
         setUsers(data);
       } catch (err) {
         // Non-critical
+      } finally {
+        setUsersLoading(false);
       }
     };
     fetchUsers();
@@ -138,7 +142,13 @@ const TaskDetailPanel = ({
       );
     } catch (err) {
       onUpdated(task);
-      onError();
+      setTitle(task.title);
+      setDescription(task.description);
+      setStatus(task.status);
+      setPriority(task.priority);
+      setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : "");
+      setAssignedUser(task.assignedUser || "");
+      onError(err instanceof Error ? err.message : undefined);
     }
 
     setIsSaving(false);
@@ -242,7 +252,7 @@ const TaskDetailPanel = ({
               </select>
             ) : (
               <span className="text-white text-body">
-                {assignedUserName || "Unassigned"}
+                {usersLoading ? "..." : assignedUserName || "Unassigned"}
               </span>
             )}
           </div>

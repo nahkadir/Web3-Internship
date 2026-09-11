@@ -126,12 +126,41 @@ export const updateTask = async (req, res, next) => {
     const { title, description, status, priority, dueDate, assignedUser } =
       req.body;
 
+    // Description / Title change with notification updates
+    const oldTitle = task.title;
+    let titleOrDescriptionChanged = false;
+
     if (title !== undefined && title !== task.title) {
       task.title = title;
+      titleOrDescriptionChanged = true;
     }
-
     if (description !== undefined && description !== task.description) {
       task.description = description;
+      titleOrDescriptionChanged = true;
+    }
+
+    if (titleOrDescriptionChanged) {
+      const notifyRecipient =
+        task.assignedUser &&
+        task.assignedUser.toString() !== req.user._id.toString()
+          ? task.assignedUser.toString()
+          : task.owner.toString() !== req.user._id.toString()
+            ? task.owner.toString()
+            : null;
+
+      if (notifyRecipient) {
+        const changeDescription =
+          title !== undefined && title !== oldTitle
+            ? `renamed "${oldTitle}" to "${title}"`
+            : `updated "${oldTitle}"`;
+
+        await createNotification({
+          recipient: notifyRecipient,
+          type: "task_updated",
+          task: task._id,
+          message: `${req.user.name} ${changeDescription}`,
+        });
+      }
     }
 
     if (status !== undefined && status !== task.status) {
@@ -195,6 +224,12 @@ export const updateTask = async (req, res, next) => {
       assignedUser !== undefined &&
       assignedUser !== (task.assignedUser ? task.assignedUser.toString() : null)
     ) {
+      if (task.owner.toString() !== req.user._id.toString()) {
+        return res
+          .status(403)
+          .json({ message: "Only the task owner can reassign this task" });
+      }
+
       const previousUser = task.assignedUser
         ? await User.findById(task.assignedUser)
         : null;
