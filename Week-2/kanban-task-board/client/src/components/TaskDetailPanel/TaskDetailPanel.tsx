@@ -35,6 +35,13 @@ const TaskDetailPanel = ({
   onError,
   onDeleted,
 }: TaskDetailPanelProps) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [activeTab, setActiveTab] = useState<Tab>("description");
   const [isEditing, setIsEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -182,9 +189,18 @@ const TaskDetailPanel = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      <div
+        className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-300 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onClose}
+      />
 
-      <div className="fixed inset-y-0 right-0 w-105 bg-card border-l border-border z-50 flex flex-col">
+      <div
+        className={`fixed top-3 bottom-3 left-3 right-3 md:top-4 md:bottom-4 md:left-auto md:right-8 w-auto md:w-105 bg-card border border-border rounded-2xl shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+          isVisible ? "translate-x-0" : "translate-x-[120%]"
+        }`}
+      >
         <div className="flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-2">
             <button

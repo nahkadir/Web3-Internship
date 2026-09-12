@@ -81,8 +81,10 @@ function BoardPage() {
   return (
     <div className="flex bg-bg h-screen overflow-hidden">
       <Sidebar user={user} onLogout={logout} />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-h1 font-semibold mb-6 text-white">Dashboard</h1>
+      <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
+        <h1 className="text-h2 md:text-h1 font-semibold mb-6 text-white">
+          Dashboard
+        </h1>
 
         {loading ? (
           <p className="text-text-muted text-body my-4">Loading tasks...</p>

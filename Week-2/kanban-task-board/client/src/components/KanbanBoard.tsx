@@ -68,7 +68,7 @@ const KanbanBoard = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between my-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 my-4">
         <div className="relative">
           <button
             onClick={() => setShowFilters((v) => !v)}
@@ -82,7 +82,7 @@ const KanbanBoard = ({
           </button>
 
           {showFilters && (
-            <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg p-4 z-30 shadow-md">
+            <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg p-4 z-30 shadow-md w-[calc(100vw-2rem)] max-w-sm sm:w-auto">
               <FilterBar
                 filters={filters}
                 onChange={onFiltersChange}
@@ -108,14 +108,14 @@ const KanbanBoard = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="flex flex-col md:grid md:grid-cols-3 gap-6">
         {columns.map((col) => {
           const columnTasks = sortTasks(
             tasks.filter((t) => t.status === col.key),
             sortBy,
           );
           return (
-            <div key={col.key}>
+            <div key={col.key} className="w-full md:min-w-0">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${col.dot}`} />
