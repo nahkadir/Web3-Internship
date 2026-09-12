@@ -86,7 +86,7 @@ const NotificationBell = () => {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-accent text-small"
+                className="text-accent text-small cursor-pointer"
               >
                 Mark all read
               </button>

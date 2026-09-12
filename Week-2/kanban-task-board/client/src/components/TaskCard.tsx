@@ -1,22 +1,31 @@
 import type { Task } from "../../types";
+import { RiArrowUpDoubleLine, RiArrowDownDoubleLine } from "react-icons/ri";
+import { BsDot } from "react-icons/bs";
 
 const priorityStyles = {
   high: {
     label: "High",
     bg: "bg-priority-high/15",
     text: "text-priority-high",
+    icon: RiArrowUpDoubleLine,
   },
   medium: {
     label: "Medium",
     bg: "bg-priority-medium/15",
     text: "text-priority-medium",
+    icon: BsDot,
   },
-  low: { label: "Low", bg: "bg-priority-low/15", text: "text-priority-low" },
+  low: {
+    label: "Low",
+    bg: "bg-priority-low/15",
+    text: "text-priority-low",
+    icon: RiArrowDownDoubleLine,
+  },
 };
 
 const urgencyStyles = {
-  overdue: { label: "Overdue", bg: "bg-priority-high", text: "text-white" },
-  soon: { label: "Due soon", bg: "bg-priority-medium", text: "text-bg" },
+  overdue: { label: "Overdue", text: "text-priority-high" },
+  soon: { label: "Due soon", text: "text-priority-medium" },
 };
 
 interface TaskCardProps {
@@ -60,18 +69,11 @@ const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
 
       <div className="flex items-center gap-2 flex-wrap">
         <span
-          className={`inline-block text-xs font-medium px-2 py-1 rounded-md ${priority.bg} ${priority.text}`}
+          className={`inline-flex items-center text-xs font-medium px-2 py-1 rounded-md ${priority.bg} ${priority.text}`}
         >
+          <priority.icon size={20} />
           {priority.label}
         </span>
-
-        {urgency && (
-          <span
-            className={`inline-block text-xs font-medium px-2 py-1 rounded-md ${urgencyStyles[urgency].bg} ${urgencyStyles[urgency].text}`}
-          >
-            {urgencyStyles[urgency].label}
-          </span>
-        )}
       </div>
 
       <h3 className="text-white text-sm font-medium mt-3 leading-snug pr-4">
@@ -90,6 +92,11 @@ const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
           <span className="text-text-muted">
             {new Date(task.dueDate).toLocaleDateString()}
           </span>
+          {urgency && (
+            <span className={`ml-2 font-medium ${urgencyStyles[urgency].text}`}>
+              {urgencyStyles[urgency].label}
+            </span>
+          )}
         </p>
       )}
     </div>

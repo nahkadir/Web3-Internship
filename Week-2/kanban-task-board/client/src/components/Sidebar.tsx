@@ -29,7 +29,7 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
       )}
 
       <aside
-        className={`w-64 h-screen bg-surface border-r border-border flex flex-col justify-between py-6 px-4 fixed md:static top-0 left-0 z-50 transition-transform duration-200 ${
+        className={`w-64 h-screen bg-surface flex flex-col justify-between py-6 px-4 fixed md:static top-0 left-0 z-50 transition-transform duration-200 ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
@@ -87,7 +87,7 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
           </nav>
         </div>
 
-        <div className="border-t border-border pt-4 px-2">
+        <div className="border-t border-border pt-4 px-2 mb-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-border flex items-center justify-center text-text text-sm font-medium shrink-0">
               {user.name.charAt(0)}

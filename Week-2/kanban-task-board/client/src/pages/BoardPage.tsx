@@ -79,9 +79,9 @@ function BoardPage() {
   };
 
   return (
-    <div className="flex bg-bg h-screen overflow-hidden">
+    <div className="flex bg-surface h-screen overflow-hidden p-3 gap-3">
       <Sidebar user={user} onLogout={logout} />
-      <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
+      <main className="flex-1 bg-bg rounded-2xl p-4 pt-16 md:p-8 overflow-y-auto shadow-xl">
         <h1 className="text-h2 md:text-h1 font-semibold mb-6 text-white">
           Dashboard
         </h1>

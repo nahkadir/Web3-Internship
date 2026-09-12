@@ -118,7 +118,7 @@ const KanbanBoard = ({
             <div key={col.key} className="w-full md:min-w-0">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${col.dot}`} />
+                  <span className={`w-3 h-3 rounded-full ${col.dot}`} />
                   <h2 className="text-text font-medium text-body select-none">
                     {col.label}
                   </h2>
