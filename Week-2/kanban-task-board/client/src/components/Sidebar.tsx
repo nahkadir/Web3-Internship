@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { User } from "../../types.ts";
 import NotificationBell from "./NotificationBell";
 import { MdOutlineViewKanban, MdMenu, MdClose } from "react-icons/md";
+import { IoExitOutline } from "react-icons/io5";
 
 interface SidebarProps {
   user: User;
@@ -87,23 +88,24 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
         </div>
 
         <div className="border-t border-border pt-4 px-2">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full bg-border flex items-center justify-center text-text text-sm font-medium">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-border flex items-center justify-center text-text text-sm font-medium shrink-0">
               {user.name.charAt(0)}
             </div>
-            <div className="overflow-hidden">
+            <div className="overflow-hidden flex-1">
               <p className="text-white text-sm font-medium truncate">
                 {user.name}
               </p>
-              <p className="text-[#8B8D98] text-xs truncate">{user.email}</p>
+              <p className="text-text text-xs truncate">{user.email}</p>
             </div>
+            <button
+              onClick={onLogout}
+              title="Log out"
+              className="text-text hover:text-priority-high transition-colors shrink-0 cursor-pointer"
+            >
+              <IoExitOutline size={20} />
+            </button>
           </div>
-          <button
-            onClick={onLogout}
-            className="w-full cursor-pointer text-left px-3 py-2 rounded-lg text-[#8B8D98] text-sm hover:bg-card hover:text-text transition-colors"
-          >
-            Log out
-          </button>
         </div>
       </aside>
     </>
