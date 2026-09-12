@@ -14,6 +14,11 @@ const priorityStyles = {
   low: { label: "Low", bg: "bg-priority-low/15", text: "text-priority-low" },
 };
 
+const urgencyStyles = {
+  overdue: { label: "Overdue", bg: "bg-priority-high", text: "text-white" },
+  soon: { label: "Due soon", bg: "bg-priority-medium", text: "text-bg" },
+};
+
 interface TaskCardProps {
   task: Task;
   onClick: () => void;
@@ -34,13 +39,6 @@ const getUrgency = (dueDate: string | null, status: Task["status"]) => {
 
 const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
   const urgency = getUrgency(task.dueDate, task.status);
-  const ringClass =
-    urgency === "overdue"
-      ? "ring-1 ring-priority-high/40"
-      : urgency === "soon"
-        ? "ring-1 ring-priority-medium/40"
-        : "";
-
   const priority = priorityStyles[task.priority];
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -51,7 +49,7 @@ const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
   return (
     <div
       onClick={onClick}
-      className={`bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md hover:border-border-hover transition-all cursor-pointer relative group ${ringClass}`}
+      className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md hover:border-border-hover transition-all cursor-pointer relative group"
     >
       <button
         onClick={handleDeleteClick}
@@ -60,11 +58,21 @@ const TaskCard = ({ task, onClick, onDelete }: TaskCardProps) => {
         ✕
       </button>
 
-      <span
-        className={`inline-block text-xs font-medium px-2 py-1 rounded-md ${priority.bg} ${priority.text}`}
-      >
-        {priority.label}
-      </span>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span
+          className={`inline-block text-xs font-medium px-2 py-1 rounded-md ${priority.bg} ${priority.text}`}
+        >
+          {priority.label}
+        </span>
+
+        {urgency && (
+          <span
+            className={`inline-block text-xs font-medium px-2 py-1 rounded-md ${urgencyStyles[urgency].bg} ${urgencyStyles[urgency].text}`}
+          >
+            {urgencyStyles[urgency].label}
+          </span>
+        )}
+      </div>
 
       <h3 className="text-white text-sm font-medium mt-3 leading-snug pr-4">
         {task.title}
