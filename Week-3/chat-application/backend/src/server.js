@@ -7,6 +7,7 @@ import healthRoutes from "./routes/health.js";
 import errorHandler from "./middleware/errorHandler.js";
 
 import authRoutes from "./routes/auth.js";
+import userRoutes from "./routes/users.js";
 
 dotenv.config();
 // reads the .env so that code can use it like process.env.MONGO_URI
@@ -23,6 +24,7 @@ app.use("/api/health", healthRoutes);
 // router is imported & mounted at /api/health
 app.use("/api/auth", authRoutes);
 // So when POST /api/auth/register comes in, Express matches /api/auth and goes to auth.js and then to router.post("/register", register) which runs the register controller.
+app.use("/api/users", userRoutes);
 
 app.use(errorHandler);
 
