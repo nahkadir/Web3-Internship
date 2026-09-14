@@ -33,3 +33,7 @@ export const login = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getMe = async (req, res) => {
+  res.status(200).json({ success: true, user: req.user });
+};
