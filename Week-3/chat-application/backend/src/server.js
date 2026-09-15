@@ -21,7 +21,10 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "chat-app-frontend-flame.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://chat-app-frontend-flame.vercel.app",
+    ],
   }),
 );
 app.use(express.json());
