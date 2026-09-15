@@ -19,7 +19,11 @@ connectDB();
 const app = express();
 // create express application - main backend application that receives HTTP requests
 
-app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "chat-app-frontend-flame.vercel.app"],
+  }),
+);
 app.use(express.json());
 
 app.use("/api/health", healthRoutes);
