@@ -3,6 +3,16 @@ import express from "express";
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Check if the server is running
+ *     responses:
+ *       200:
+ *         description: Server is healthy
+ */
+
 router.get("/", (req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });

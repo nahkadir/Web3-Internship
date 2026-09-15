@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import healthRoutes from "./routes/health.js";
 import errorHandler from "./middleware/errorHandler.js";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger.js";
 
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
@@ -25,6 +27,8 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 // So when POST /api/auth/register comes in, Express matches /api/auth and goes to auth.js and then to router.post("/register", register) which runs the register controller.
 app.use("/api/users", userRoutes);
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(errorHandler);
 
