@@ -14,6 +14,7 @@ const options = {
       },
     ],
   },
+  // reads JSDoc comments from route files
   apis: ["./src/routes/*.js"],
 };
 
