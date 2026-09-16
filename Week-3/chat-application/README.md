@@ -101,3 +101,37 @@ Interactive Swagger docs available at `http://localhost:5000/api-docs` once the 
 - Chat data models designed with correct relationships
 - Frontend auth UI: login, register, protected dashboard, profile edit
 - Swagger API documentation
+
+## Real-Time Messaging (Socket.io)
+
+### Setup
+
+Socket.io is attached to the same HTTP server as Express — no separate port or service needed. Backend `.env` requires the same `JWT_SECRET` used for REST auth, since socket connections are authenticated with the same tokens.
+
+No additional environment variables are needed beyond what's listed above; `CLIENT_URL`/CORS config is shared between REST and Socket.io.
+
+### How It Works
+
+- On login, the frontend establishes a single authenticated socket connection using the JWT.
+- Opening a conversation joins its Socket.io room (`join_conversation`); leaving it removes the socket from that room (`leave_conversation`).
+- Sending a message (`send_message`) validates membership and content server-side, persists it to MongoDB, then broadcasts it to everyone in the room (`receive_message`) — including the sender.
+- Message history loads via `GET /api/conversations/:conversationId/messages` before joining the room, so users see prior messages immediately, with new messages arriving in real time afterward.
+
+### Socket Events
+
+| Event                 | Direction       | Payload                                                |
+| --------------------- | --------------- | ------------------------------------------------------ |
+| `join_conversation`   | Client → Server | `{ conversationId }`                                   |
+| `joined_conversation` | Server → Client | `{ conversationId }`                                   |
+| `leave_conversation`  | Client → Server | `{ conversationId }`                                   |
+| `send_message`        | Client → Server | `{ conversationId, content }`                          |
+| `receive_message`     | Server → Client | `{ id, conversationId, senderId, content, createdAt }` |
+| `error`               | Server → Client | `{ message }`                                          |
+
+### Testing Real-Time Messaging
+
+1. Open two separate browser profiles or an incognito window alongside a normal window (regular tabs share `localStorage`, so two tabs of the same browser will conflict on auth tokens).
+2. Log in as two different users, one per window.
+3. Select each other from the user list to start a conversation.
+4. Send messages from either side — they should appear instantly in both windows without a refresh.
+5. Refresh either window mid-conversation — message history should persist via the REST endpoint.

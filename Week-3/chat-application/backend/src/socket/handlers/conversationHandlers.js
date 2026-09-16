@@ -19,6 +19,9 @@ const registerConversationHandlers = (io, socket) => {
       }
 
       socket.join(conversationId);
+      // track which room this socket is actively viewing
+      socket.activeConversationId = conversationId;
+
       socket.emit("joined_conversation", { conversationId });
       console.log(`User ${socket.userId} joined room ${conversationId}`);
     } catch (err) {
@@ -29,6 +32,12 @@ const registerConversationHandlers = (io, socket) => {
   socket.on("leave_conversation", ({ conversationId }) => {
     if (!conversationId) return;
     socket.leave(conversationId);
+
+    if (socket.activeConversationId === conversationId) {
+      // clear tracked room on leave
+      socket.activeConversationId = null;
+    }
+
     console.log(`User ${socket.userId} left room ${conversationId}`);
   });
 };
