@@ -8,9 +8,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  connected: "Online",
+  connected: "Connected",
   connecting: "Connecting...",
-  disconnected: "Offline",
+  disconnected: "Disconnected",
   error: "Connection lost",
 };
 

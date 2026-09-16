@@ -2,6 +2,8 @@ import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import registerConversationHandlers from "./handlers/conversationHandlers.js";
 import registerMessageHandlers from "./handlers/messageHandlers.js";
+import { addUserSocket, removeUserSocket } from "./presence.js";
+import registerTypingHandlers from "./handlers/typingHandlers.js";
 
 // Create the Socket.IO server
 // Attach Socket.IO to this HTTP server
@@ -38,13 +40,24 @@ const initSocket = (httpServer) => {
   io.on("connection", (socket) => {
     console.log(`Socket connected: user ${socket.userId}, socket ${socket.id}`);
 
+    const isFirstConnection = addUserSocket(socket.userId, socket.id);
+    if (isFirstConnection) {
+      io.emit("user_online", { userId: socket.userId });
+    }
+
     registerConversationHandlers(io, socket);
     registerMessageHandlers(io, socket);
+    registerTypingHandlers(io, socket);
 
     socket.on("disconnect", () => {
       console.log(
         `Socket disconnected: user ${socket.userId}, socket ${socket.id}`,
       );
+
+      const isNowOffline = removeUserSocket(socket.userId, socket.id);
+      if (isNowOffline) {
+        io.emit("user_offline", { userId: socket.userId });
+      }
     });
   });
 
