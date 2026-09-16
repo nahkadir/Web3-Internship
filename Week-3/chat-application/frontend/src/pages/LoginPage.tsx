@@ -16,7 +16,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      navigate("/chat");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {

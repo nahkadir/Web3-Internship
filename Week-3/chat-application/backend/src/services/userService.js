@@ -33,3 +33,7 @@ export const updateUserProfile = async (userId, updates) => {
 
   return user;
 };
+
+export const getAllUsersExcept = async (userId) => {
+  return User.find({ _id: { $ne: userId } }).select("name email avatar");
+};

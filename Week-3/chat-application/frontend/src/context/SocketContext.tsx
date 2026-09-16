@@ -8,46 +8,44 @@ import {
 import { socket } from "../lib/socket";
 import { useAuth } from "./AuthContext";
 
-type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
+type SocketStatus = "connecting" | "connected" | "disconnected" | "error";
 
 type SocketContextType = {
   socket: typeof socket;
-  status: ConnectionStatus;
+  status: SocketStatus;
 };
 
-const SocketContext = createContext<SocketContextType>({
-  socket,
-  status: "disconnected",
-});
+const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  const [status, setStatus] = useState<ConnectionStatus>("disconnected");
+  const [status, setStatus] = useState<SocketStatus>("disconnected");
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      socket.disconnect();
+      setStatus("disconnected");
+      return;
+    }
 
     const token = localStorage.getItem("token");
     socket.auth = { token };
+
     setStatus("connecting");
     socket.connect();
 
-    const handleConnect = () => setStatus("connected");
-    const handleDisconnect = () => setStatus("disconnected");
-    // const handleError = () => setStatus("error");
-    const handleError = (err: Error) => {
-      console.log("Socket connect_error:", err.message);
-      setStatus("error");
-    };
+    const onConnect = () => setStatus("connected");
+    const onDisconnect = () => setStatus("disconnected");
+    const onConnectError = () => setStatus("error");
 
-    socket.on("connect", handleConnect);
-    socket.on("disconnect", handleDisconnect);
-    socket.on("connect_error", handleError);
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", onConnectError);
 
     return () => {
-      socket.off("connect", handleConnect);
-      socket.off("disconnect", handleDisconnect);
-      socket.off("connect_error", handleError);
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("connect_error", onConnectError);
       socket.disconnect();
     };
   }, [user]);
@@ -59,4 +57,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useSocket = () => useContext(SocketContext);
+export const useSocket = () => {
+  const context = useContext(SocketContext);
+  if (!context) throw new Error("useSocket must be used within SocketProvider");
+  return context;
+};

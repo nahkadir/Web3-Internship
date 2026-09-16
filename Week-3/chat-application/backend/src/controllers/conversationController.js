@@ -5,15 +5,16 @@ export const createOrFindConversation = async (req, res, next) => {
     const { recipientId } = req.body;
 
     if (!recipientId) {
-      return res.status(400).json({ message: "recipientId is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "recipientId is required" });
     }
 
     const conversation = await findOrCreatePrivateConversation(
       req.user._id,
       recipientId,
     );
-
-    res.status(201).json({ conversation });
+    res.status(200).json({ success: true, conversation });
   } catch (err) {
     next(err);
   }
