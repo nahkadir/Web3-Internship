@@ -33,3 +33,9 @@ export const apiRequest = async (
 
   return data;
 };
+
+export const getUsers = () => apiRequest("/users");
+export const getOrCreateConversation = (recipientId: string) =>
+  apiRequest("/conversations", { method: "POST", body: { recipientId } });
+export const getMessages = (conversationId: string) =>
+  apiRequest(`/conversations/${conversationId}/messages`);

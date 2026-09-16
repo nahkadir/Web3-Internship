@@ -2,7 +2,7 @@
 
 @theme {
   /* Colors */
-  --color-bg-ambient: #c9c3f5;
+  --color-bg-ambient: #212023;
   --color-sidebar: #151419;
   --color-surface: #ffffff;
   --color-surface-muted: #f5f4fa;
@@ -12,6 +12,7 @@
   --color-text-primary: #17171c;
   --color-text-secondary: #8a8894;
   --color-border: #ecebf3;
+  --color-send-bg: #eeeffa;
 
   /* Typography */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
