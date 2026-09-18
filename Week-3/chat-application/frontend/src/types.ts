@@ -19,3 +19,12 @@ export type Conversation = {
   name?: string;
   members: { _id: string; name: string; avatar?: string }[];
 };
+
+export type ConversationListItem = {
+  id: string;
+  type: "private" | "group";
+  name?: string;
+  members: { _id: string; name: string; avatar?: string }[];
+  lastMessage: { content: string; createdAt: string } | null;
+  updatedAt: string;
+};

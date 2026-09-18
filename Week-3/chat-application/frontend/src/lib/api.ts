@@ -35,7 +35,18 @@ export const apiRequest = async (
 };
 
 export const getUsers = () => apiRequest("/users");
+
 export const getOrCreateConversation = (recipientId: string) =>
   apiRequest("/conversations", { method: "POST", body: { recipientId } });
+
 export const getMessages = (conversationId: string) =>
   apiRequest(`/conversations/${conversationId}/messages`);
+
+export const getConversations = () => apiRequest("/conversations");
+
+export const createConversation = (payload: {
+  type?: "private" | "group";
+  recipientId?: string;
+  name?: string;
+  memberIds?: string[];
+}) => apiRequest("/conversations", { method: "POST", body: payload });

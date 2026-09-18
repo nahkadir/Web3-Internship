@@ -10,6 +10,13 @@ export const findOrCreatePrivateConversation = async (userId, recipientId) => {
     throw error;
   }
 
+  const recipient = await User.findById(recipientId).select("_id");
+  if (!recipient) {
+    const error = new Error("Recipient does not exist");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Find private conversations userId belongs to
   const userMemberships = await ConversationMember.find({ userId }).select(
     "conversationId",

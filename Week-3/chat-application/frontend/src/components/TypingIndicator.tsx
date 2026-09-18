@@ -1,23 +1,33 @@
-import type { Conversation, ChatUser } from "../types";
+import type { ConversationListItem } from "../types";
 
 type Props = {
   typingUsers: Set<string>;
-  activeConversation: Conversation | null;
-  activeUser: ChatUser | null;
+  activeConversation: ConversationListItem | null;
+  currentUserId?: string;
 };
 
 const TypingIndicator = ({
   typingUsers,
   activeConversation,
-  activeUser,
+  currentUserId,
 }: Props) => {
-  if (typingUsers.size === 0) return null;
+  if (typingUsers.size === 0 || !activeConversation) return null;
 
+  if (activeConversation.type === "group") {
+    return (
+      <p className="text-tiny text-text-secondary mb-1">
+        {typingUsers.size} {typingUsers.size === 1 ? "person is" : "people are"}{" "}
+        typing...
+      </p>
+    );
+  }
+
+  const other = activeConversation.members.find(
+    (m) => m && m._id !== currentUserId,
+  );
   return (
     <p className="text-tiny text-text-secondary mb-1">
-      {activeConversation?.type === "group"
-        ? `${typingUsers.size} ${typingUsers.size === 1 ? "person is" : "people are"} typing...`
-        : `${activeUser?.name} is typing...`}
+      {other?.name ?? "Someone"} is typing...
     </p>
   );
 };

@@ -3,55 +3,73 @@ import { Link } from "react-router-dom";
 import { LogOut, MessageSquare, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
-import { getUsers, getOrCreateConversation, getMessages } from "../lib/api";
-import type { ChatUser, Message, Conversation } from "../types";
+import { getConversations, getMessages } from "../lib/api";
+import type { Message, ConversationListItem } from "../types";
 import Sidebar from "../components/Sidebar";
 import ChatHeader from "../components/ChatHeader";
 import MessageList from "../components/MessageList";
 import TypingIndicator from "../components/TypingIndicator";
 import MessageInput from "../components/MessageInput";
+import NewChatModal from "../components/NewChatModal";
 
 const ChatPage = () => {
   const { user, logout } = useAuth();
   const { socket, onlineUserIds } = useSocket();
 
-  const [users, setUsers] = useState<ChatUser[]>([]);
-  const [activeUser, setActiveUser] = useState<ChatUser | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<ConversationListItem[]>(
+    [],
+  );
   const [activeConversation, setActiveConversation] =
-    useState<Conversation | null>(null);
+    useState<ConversationListItem | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    getUsers().then((data) =>
-      setUsers(
-        data.users.map((u: any) => ({
-          id: u._id,
-          name: u.name,
-          email: u.email,
-          avatar: u.avatar,
-        })),
-      ),
+  const [showNewChat, setShowNewChat] = useState(false);
+
+  const handleConversationCreated = async (conversationId: string) => {
+    const data = await getConversations();
+    setConversations(data.conversations);
+
+    const created = data.conversations.find(
+      (c: ConversationListItem) => c.id === conversationId,
     );
+    if (created) {
+      setShowNewChat(false);
+      openConversation(created);
+    }
+  };
+
+  useEffect(() => {
+    getConversations().then((data) => setConversations(data.conversations));
   }, []);
 
   useEffect(() => {
     if (!socket) return;
 
     const onReceive = (msg: Message) => {
-      if (msg.conversationId === conversationId) {
+      if (msg.conversationId === activeConversation?.id) {
         setMessages((prev) => [...prev, msg]);
       }
+      // bump the conversation to the top / update its preview regardless of which one is open
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === msg.conversationId
+            ? {
+                ...c,
+                lastMessage: { content: msg.content, createdAt: msg.createdAt },
+              }
+            : c,
+        ),
+      );
     };
 
     socket.on("receive_message", onReceive);
     return () => {
       socket.off("receive_message", onReceive);
     };
-  }, [socket, conversationId]);
+  }, [socket, activeConversation?.id]);
 
   useEffect(() => {
     if (!socket) return;
@@ -63,7 +81,7 @@ const ChatPage = () => {
       userId: string;
       conversationId: string;
     }) => {
-      if (cid !== conversationId) return;
+      if (cid !== activeConversation?.id) return;
       setTypingUsers((prev) => new Set(prev).add(userId));
     };
 
@@ -74,7 +92,7 @@ const ChatPage = () => {
       userId: string;
       conversationId: string;
     }) => {
-      if (cid !== conversationId) return;
+      if (cid !== activeConversation?.id) return;
       setTypingUsers((prev) => {
         const next = new Set(prev);
         next.delete(userId);
@@ -88,26 +106,18 @@ const ChatPage = () => {
       socket.off("typing_start", onTypingStart);
       socket.off("typing_stop", onTypingStop);
     };
-  }, [socket, conversationId]);
+  }, [socket, activeConversation?.id]);
 
-  const openConversation = async (targetUser: ChatUser) => {
-    if (conversationId) {
-      socket.emit("leave_conversation", { conversationId });
+  const openConversation = async (conversation: ConversationListItem) => {
+    if (activeConversation) {
+      socket.emit("leave_conversation", {
+        conversationId: activeConversation.id,
+      });
     }
 
-    const { conversation } = await getOrCreateConversation(targetUser.id);
-    const { messages: history } = await getMessages(conversation._id);
+    const { messages: history } = await getMessages(conversation.id);
 
-    setActiveUser(targetUser);
-    setConversationId(conversation._id);
-    setActiveConversation({
-      id: conversation._id,
-      type: conversation.type,
-      name: conversation.name,
-      members: conversation.members ?? [
-        { _id: targetUser.id, name: targetUser.name },
-      ],
-    });
+    setActiveConversation(conversation);
     setMessages(
       history.map((m: any) => ({
         id: m._id,
@@ -118,30 +128,34 @@ const ChatPage = () => {
       })),
     );
 
-    socket.emit("join_conversation", { conversationId: conversation._id });
+    socket.emit("join_conversation", { conversationId: conversation.id });
   };
 
   const handleSend = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!activeConversation) return;
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    socket.emit("typing_stop", { conversationId });
+    socket.emit("typing_stop", { conversationId: activeConversation.id });
 
-    if (!input.trim() || !conversationId) return;
+    if (!input.trim()) return;
 
-    socket.emit("send_message", { conversationId, content: input });
+    socket.emit("send_message", {
+      conversationId: activeConversation.id,
+      content: input,
+    });
     setInput("");
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
-    if (!conversationId) return;
+    if (!activeConversation) return;
 
-    socket.emit("typing_start", { conversationId });
+    socket.emit("typing_start", { conversationId: activeConversation.id });
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing_stop", { conversationId });
+      socket.emit("typing_stop", { conversationId: activeConversation.id });
     }, 2000);
   };
 
@@ -171,29 +185,38 @@ const ChatPage = () => {
 
       <div className="bg-surface rounded-panel flex-1 flex overflow-hidden">
         <Sidebar
-          users={users}
-          activeUserId={activeUser?.id}
-          onSelectUser={openConversation}
+          conversations={conversations}
+          activeConversationId={activeConversation?.id}
+          onSelectConversation={openConversation}
+          onNewChat={() => setShowNewChat(true)}
+          currentUserId={user?.id}
           onlineUserIds={onlineUserIds}
         />
 
+        {showNewChat && (
+          <NewChatModal
+            onClose={() => setShowNewChat(false)}
+            onCreated={handleConversationCreated}
+          />
+        )}
+
         <div className="bg-surface rounded-panel flex-1 flex flex-col p-4">
-          {activeUser ? (
+          {activeConversation ? (
             <>
               <ChatHeader
                 activeConversation={activeConversation}
-                activeUser={activeUser}
+                currentUserId={user?.id}
                 onlineUserIds={onlineUserIds}
               />
               <MessageList
                 messages={messages}
                 currentUserId={user?.id}
-                activeUser={activeUser}
+                activeConversation={activeConversation}
               />
               <TypingIndicator
                 typingUsers={typingUsers}
                 activeConversation={activeConversation}
-                activeUser={activeUser}
+                currentUserId={user?.id}
               />
               <MessageInput
                 value={input}
@@ -203,7 +226,7 @@ const ChatPage = () => {
             </>
           ) : (
             <p className="text-text-secondary m-auto">
-              Select a user to start chatting
+              Select a conversation to start chatting
             </p>
           )}
         </div>

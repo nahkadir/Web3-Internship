@@ -1,36 +1,97 @@
-import type { ChatUser } from "../types";
+import type { ConversationListItem } from "../types";
 
 type Props = {
-  users: ChatUser[];
-  activeUserId?: string;
-  onSelectUser: (user: ChatUser) => void;
+  conversations: ConversationListItem[];
+  activeConversationId?: string;
+  onSelectConversation: (conversation: ConversationListItem) => void;
+  onNewChat: () => void;
+  currentUserId?: string;
   onlineUserIds: Set<string>;
 };
 
+const getOtherMember = (c: ConversationListItem, currentUserId?: string) =>
+  c.members.find((m) => m && m._id !== currentUserId) ?? null;
+
+const getDisplayName = (c: ConversationListItem, currentUserId?: string) => {
+  if (c.type === "group") return c.name ?? "Group";
+  return getOtherMember(c, currentUserId)?.name ?? "Unknown";
+};
+
+const isOnline = (
+  c: ConversationListItem,
+  currentUserId: string | undefined,
+  onlineUserIds: Set<string>,
+) => {
+  if (c.type === "group") return false;
+  const other = getOtherMember(c, currentUserId);
+  return other ? onlineUserIds.has(other._id) : false;
+};
+
+const formatTime = (iso?: string) => {
+  if (!iso) return "";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+};
+
 const Sidebar = ({
-  users,
-  activeUserId,
-  onSelectUser,
+  conversations,
+  activeConversationId,
+  onSelectConversation,
+  onNewChat,
+  currentUserId,
   onlineUserIds,
 }: Props) => (
   <div className="w-64 flex flex-col p-4 gap-2">
-    <h2 className="text-h2 mb-2">Chats</h2>
-    {users.map((u) => (
+    <div className="flex items-center justify-between mb-2">
+      <h2 className="text-h2">Chats</h2>
       <button
-        key={u.id}
-        onClick={() => onSelectUser(u)}
+        onClick={onNewChat}
+        className="text-tiny px-2 py-1 rounded-card bg-primary text-white hover:opacity-90"
+      >
+        + New
+      </button>
+    </div>
+    {conversations.map((c) => (
+      <button
+        key={c.id}
+        onClick={() => onSelectConversation(c)}
         className={`w-full text-left px-3 py-2 rounded-card text-body cursor-pointer transition-colors ${
-          activeUserId === u.id ? "bg-primary-tint" : "hover:bg-surface-muted"
+          activeConversationId === c.id
+            ? "bg-primary-tint"
+            : "hover:bg-surface-muted"
         }`}
       >
-        <span className="flex items-center gap-2">
-          <span
-            className={`w-2 h-2 rounded-pill ${
-              onlineUserIds.has(u.id) ? "bg-green-500" : "bg-gray-400"
-            }`}
-          />
-          {u.name}
-        </span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2 truncate">
+            {c.type === "private" && (
+              <span
+                className={`w-2 h-2 rounded-pill shrink-0 ${
+                  isOnline(c, currentUserId, onlineUserIds)
+                    ? "bg-green-500"
+                    : "bg-gray-400"
+                }`}
+              />
+            )}
+            <span className="font-medium truncate">
+              {getDisplayName(c, currentUserId)}
+            </span>
+          </span>
+          {c.lastMessage && (
+            <span className="text-tiny text-text-secondary shrink-0">
+              {formatTime(c.lastMessage.createdAt ?? c.updatedAt)}
+            </span>
+          )}
+        </div>
+        {c.lastMessage && (
+          <p className="text-tiny text-text-secondary truncate mt-0.5">
+            {c.lastMessage.content}
+          </p>
+        )}
       </button>
     ))}
   </div>

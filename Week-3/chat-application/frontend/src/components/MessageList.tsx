@@ -1,28 +1,39 @@
 import { useEffect, useRef } from "react";
-import type { Message, ChatUser } from "../types";
+import type { Message, ConversationListItem } from "../types";
 
 type Props = {
   messages: Message[];
   currentUserId?: string;
-  activeUser: ChatUser | null;
+  activeConversation: ConversationListItem | null;
 };
 
 const getSenderId = (senderId: Message["senderId"]) =>
-  typeof senderId === "string" ? senderId : senderId._id;
+  senderId && typeof senderId === "object" ? senderId._id : senderId;
 
-const MessageList = ({ messages, currentUserId, activeUser }: Props) => {
+const MessageList = ({
+  messages,
+  currentUserId,
+  activeConversation,
+}: Props) => {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const isGroup = activeConversation?.type === "group";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const getSenderName = (senderId: Message["senderId"]) => {
+    if (senderId && typeof senderId === "object") return senderId.name;
+    const member = activeConversation?.members.find(
+      (m) => m && m._id === senderId,
+    );
+    return member?.name ?? "Unknown";
+  };
+
   return (
     <div className="flex-1 overflow-y-auto space-y-2">
       {messages.map((m) => {
         const isMine = getSenderId(m.senderId) === currentUserId;
-        const senderName =
-          typeof m.senderId === "object" ? m.senderId.name : activeUser?.name;
 
         return (
           <div key={m.id} className={`max-w-xs ${isMine ? "ml-auto" : ""}`}>
@@ -33,9 +44,9 @@ const MessageList = ({ messages, currentUserId, activeUser }: Props) => {
                   : "bg-primary-tint text-text-primary"
               }`}
             >
-              {!isMine && (
+              {!isMine && isGroup && (
                 <span className="text-tiny font-medium block mb-1 opacity-80">
-                  {senderName}
+                  {getSenderName(m.senderId)}
                 </span>
               )}
               <p>{m.content}</p>
