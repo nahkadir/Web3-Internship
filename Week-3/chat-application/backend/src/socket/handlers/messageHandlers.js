@@ -1,4 +1,10 @@
-import { createMessage } from "../../services/messageService.js";
+import {
+  createMessage,
+  markMessagesAsRead,
+} from "../../services/messageService.js";
+import { getConversationMemberIds } from "../../services/conversationService.js";
+import { getUserSocketIds } from "../presence.js";
+import Message from "../../models/Message.js";
 
 const registerMessageHandlers = (io, socket) => {
   socket.on("send_message", async ({ conversationId, content }) => {
@@ -17,11 +23,73 @@ const registerMessageHandlers = (io, socket) => {
         createdAt: message.createdAt,
       };
 
-      // Broadcast to everyone in the room, including the sender
       io.to(conversationId).emit("receive_message", payload);
+
+      // Determine delivered/read status per other member
+      const memberIds = await getConversationMemberIds(conversationId);
+      const otherMemberIds = memberIds.filter((id) => id !== socket.userId);
+
+      const deliveredTo = [];
+      const readBy = [];
+
+      for (const memberId of otherMemberIds) {
+        const socketIds = getUserSocketIds(memberId);
+        if (socketIds.size === 0) continue; // offline — stays "sent"
+
+        deliveredTo.push(memberId);
+
+        const isViewing = [...socketIds].some((sid) => {
+          const s = io.sockets.sockets.get(sid);
+          return s?.activeConversationId === conversationId;
+        });
+
+        if (isViewing) readBy.push(memberId);
+      }
+
+      if (deliveredTo.length > 0 || readBy.length > 0) {
+        await Message.findByIdAndUpdate(message._id, {
+          $addToSet: {
+            deliveredTo: { $each: deliveredTo },
+            readBy: { $each: readBy },
+          },
+        });
+
+        io.to(conversationId).emit("message_delivered", {
+          messageId: message._id,
+          deliveredTo,
+        });
+        if (readBy.length > 0) {
+          io.to(conversationId).emit("message_read", {
+            messageId: message._id,
+            readBy,
+          });
+        }
+      }
     } catch (err) {
       socket.emit("error", {
         message: err.message || "Failed to send message",
+      });
+    }
+  });
+
+  socket.on("mark_messages_read", async ({ conversationId }) => {
+    try {
+      if (!conversationId) return;
+
+      const messageIds = await markMessagesAsRead(
+        conversationId,
+        socket.userId,
+      );
+      if (messageIds.length === 0) return;
+
+      io.to(conversationId).emit("message_read", {
+        conversationId,
+        messageIds,
+        readerId: socket.userId,
+      });
+    } catch (err) {
+      socket.emit("error", {
+        message: err.message || "Failed to mark messages as read",
       });
     }
   });

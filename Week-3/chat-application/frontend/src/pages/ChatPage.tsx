@@ -16,6 +16,7 @@ const ChatPage = () => {
   const { user, logout } = useAuth();
   const { socket, onlineUserIds } = useSocket();
 
+  console.log("current user:", user);
   const [conversations, setConversations] = useState<ConversationListItem[]>(
     [],
   );
@@ -52,13 +53,14 @@ const ChatPage = () => {
       if (msg.conversationId === activeConversation?.id) {
         setMessages((prev) => [...prev, msg]);
       }
-      // bump the conversation to the top / update its preview regardless of which one is open
       setConversations((prev) =>
         prev.map((c) =>
           c.id === msg.conversationId
             ? {
                 ...c,
                 lastMessage: { content: msg.content, createdAt: msg.createdAt },
+                unreadCount:
+                  c.id === activeConversation?.id ? 0 : c.unreadCount + 1,
               }
             : c,
         ),
@@ -108,6 +110,63 @@ const ChatPage = () => {
     };
   }, [socket, activeConversation?.id]);
 
+  useEffect(() => {
+    if (!socket) return;
+
+    const onDelivered = ({
+      messageId,
+      deliveredTo,
+    }: {
+      messageId: string;
+      deliveredTo: string[];
+    }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? {
+                ...m,
+                deliveredTo: [
+                  ...new Set([...(m.deliveredTo ?? []), ...deliveredTo]),
+                ],
+              }
+            : m,
+        ),
+      );
+    };
+
+    const onRead = (data: {
+      messageId?: string;
+      readBy?: string[];
+      messageIds?: string[];
+      readerId?: string;
+    }) => {
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (data.messageIds && data.messageIds.includes(m.id)) {
+            return {
+              ...m,
+              readBy: [...new Set([...(m.readBy ?? []), data.readerId!])],
+            };
+          }
+          if (data.messageId === m.id && data.readBy) {
+            return {
+              ...m,
+              readBy: [...new Set([...(m.readBy ?? []), ...data.readBy])],
+            };
+          }
+          return m;
+        }),
+      );
+    };
+
+    socket.on("message_delivered", onDelivered);
+    socket.on("message_read", onRead);
+    return () => {
+      socket.off("message_delivered", onDelivered);
+      socket.off("message_read", onRead);
+    };
+  }, [socket]);
+
   const openConversation = async (conversation: ConversationListItem) => {
     if (activeConversation) {
       socket.emit("leave_conversation", {
@@ -125,10 +184,18 @@ const ChatPage = () => {
         senderId: m.senderId,
         content: m.content,
         createdAt: m.createdAt,
+        deliveredTo: m.deliveredTo ?? [],
+        readBy: m.readBy ?? [],
       })),
     );
 
     socket.emit("join_conversation", { conversationId: conversation.id });
+    socket.emit("mark_messages_read", { conversationId: conversation.id });
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === conversation.id ? { ...c, unreadCount: 0 } : c,
+      ),
+    );
   };
 
   const handleSend = (e: React.FormEvent<HTMLFormElement>) => {

@@ -86,6 +86,11 @@ const Sidebar = ({
               {formatTime(c.lastMessage.createdAt ?? c.updatedAt)}
             </span>
           )}
+          {c.unreadCount > 0 && (
+            <span className="text-tiny bg-primary text-white rounded-pill flex items-center justify-center w-5 h-5 shrink-0">
+              {c.unreadCount}
+            </span>
+          )}
         </div>
         {c.lastMessage && (
           <p className="text-tiny text-text-secondary truncate mt-0.5">

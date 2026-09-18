@@ -5,8 +5,6 @@ const messageSchema = new mongoose.Schema(
     conversationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Conversation",
-      // ref tells Mongoose which model this ObjectId belongs to
-      // It allows Mongoose to use populate()
       required: true,
     },
     senderId: {
@@ -20,6 +18,10 @@ const messageSchema = new mongoose.Schema(
       enum: ["text", "image", "file"],
       default: "text",
     },
+    deliveredTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    edited: { type: Boolean, default: false },
+    deleted: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

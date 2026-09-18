@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Check, CheckCheck } from "lucide-react";
 import type { Message, ConversationListItem } from "../types";
 
 type Props = {
@@ -9,6 +10,22 @@ type Props = {
 
 const getSenderId = (senderId: Message["senderId"]) =>
   senderId && typeof senderId === "object" ? senderId._id : senderId;
+
+const getTickStatus = (
+  m: Message,
+  activeConversation: ConversationListItem | null,
+  currentUserId?: string,
+): "sent" | "delivered" | "read" => {
+  if (!activeConversation || activeConversation.type !== "private")
+    return "sent";
+  const other = activeConversation.members.find(
+    (mem) => mem && mem._id !== currentUserId,
+  );
+  if (!other) return "sent";
+  if (m.readBy?.includes(other._id)) return "read";
+  if (m.deliveredTo?.includes(other._id)) return "delivered";
+  return "sent";
+};
 
 const MessageList = ({
   messages,
@@ -56,6 +73,24 @@ const MessageList = ({
                   minute: "2-digit",
                 })}
               </span>
+
+              {isMine && (
+                <span
+                  className={`inline-flex ml-1 ${
+                    getTickStatus(m, activeConversation, currentUserId) ===
+                    "read"
+                      ? "text-blue-300"
+                      : "opacity-70"
+                  }`}
+                >
+                  {getTickStatus(m, activeConversation, currentUserId) ===
+                  "sent" ? (
+                    <Check size={14} />
+                  ) : (
+                    <CheckCheck size={14} />
+                  )}
+                </span>
+              )}
             </div>
           </div>
         );

@@ -11,6 +11,8 @@ export type Message = {
   senderId: string | { _id: string; name: string; avatar?: string };
   content: string;
   createdAt: string;
+  deliveredTo?: string[];
+  readBy?: string[];
 };
 
 export type Conversation = {
@@ -27,4 +29,5 @@ export type ConversationListItem = {
   members: { _id: string; name: string; avatar?: string }[];
   lastMessage: { content: string; createdAt: string } | null;
   updatedAt: string;
+  unreadCount: number;
 };

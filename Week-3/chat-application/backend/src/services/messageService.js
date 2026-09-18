@@ -51,3 +51,30 @@ export const getConversationMessages = async (
 
   return messages.reverse(); // chronological order for display
 };
+
+export const markMessagesAsRead = async (conversationId, userId) => {
+  const isMember = await verifyConversationMembership(conversationId, userId);
+  if (!isMember) {
+    const error = new Error("You are not a member of this conversation");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  // only messages from OTHERS, not already read by this user
+  const unread = await Message.find({
+    conversationId,
+    senderId: { $ne: userId },
+    readBy: { $ne: userId },
+  }).select("_id");
+
+  if (unread.length === 0) return [];
+
+  const messageIds = unread.map((m) => m._id);
+
+  await Message.updateMany(
+    { _id: { $in: messageIds } },
+    { $addToSet: { readBy: userId } },
+  );
+
+  return messageIds;
+};
