@@ -137,6 +137,12 @@ export const getUserConversations = async (userId) => {
         .select("content senderId createdAt")
         .lean();
 
+      const unreadCount = await Message.countDocuments({
+        conversationId: conv._id,
+        senderId: { $ne: userId },
+        readBy: { $ne: userId },
+      });
+
       return {
         id: conv._id,
         type: conv.type,
@@ -146,9 +152,18 @@ export const getUserConversations = async (userId) => {
           ? { content: lastMessage.content, createdAt: lastMessage.createdAt }
           : null,
         updatedAt: conv.updatedAt,
+        unreadCount,
       };
     }),
   );
 
   return enriched;
+};
+
+// a way to list a conversation's members
+export const getConversationMemberIds = async (conversationId) => {
+  const members = await ConversationMember.find({ conversationId }).select(
+    "userId",
+  );
+  return members.map((m) => m.userId.toString());
 };
