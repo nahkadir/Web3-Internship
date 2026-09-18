@@ -29,7 +29,7 @@ export const createMessage = async ({ conversationId, senderId, content }) => {
 export const getConversationMessages = async (
   conversationId,
   userId,
-  { limit = 50, before } = {},
+  { page = 1, limit = 30 } = {},
 ) => {
   const isMember = await verifyConversationMembership(conversationId, userId);
   if (!isMember) {
@@ -38,18 +38,22 @@ export const getConversationMessages = async (
     throw error;
   }
 
-  const query = { conversationId };
-  if (before) {
-    query.createdAt = { $lt: new Date(before) };
-  }
+  const skip = (page - 1) * limit;
 
-  const messages = await Message.find(query)
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .populate("senderId", "name avatar")
-    .lean();
+  const [messages, total] = await Promise.all([
+    Message.find({ conversationId })
+      .sort({ createdAt: -1 }) // newest first for pagination math
+      .skip(skip)
+      .limit(limit)
+      .populate("senderId", "name avatar")
+      .lean(),
+    Message.countDocuments({ conversationId }),
+  ]);
 
-  return messages.reverse(); // chronological order for display
+  return {
+    messages: messages.reverse(), // chronological order for display
+    hasMore: skip + messages.length < total,
+  };
 };
 
 export const markMessagesAsRead = async (conversationId, userId) => {
@@ -77,4 +81,60 @@ export const markMessagesAsRead = async (conversationId, userId) => {
   );
 
   return messageIds;
+};
+
+export const editMessage = async (messageId, userId, newContent) => {
+  const trimmed = newContent?.trim();
+  if (!trimmed) {
+    const error = new Error("Message content cannot be empty");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const message = await Message.findById(messageId);
+  if (!message) {
+    const error = new Error("Message not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // never trust client-claimed ownership — compare against the actual document
+  if (message.senderId.toString() !== userId.toString()) {
+    const error = new Error("You can only edit your own messages");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  if (message.deleted) {
+    const error = new Error("Cannot edit a deleted message");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  message.content = trimmed;
+  message.edited = true;
+  await message.save();
+
+  return message;
+};
+
+export const deleteMessage = async (messageId, userId) => {
+  const message = await Message.findById(messageId);
+  if (!message) {
+    const error = new Error("Message not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (message.senderId.toString() !== userId.toString()) {
+    const error = new Error("You can only delete your own messages");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  message.content = "This message was deleted.";
+  message.deleted = true;
+  await message.save();
+
+  return message;
 };

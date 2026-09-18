@@ -13,6 +13,8 @@ export type Message = {
   createdAt: string;
   deliveredTo?: string[];
   readBy?: string[];
+  edited?: boolean;
+  deleted?: boolean;
 };
 
 export type Conversation = {

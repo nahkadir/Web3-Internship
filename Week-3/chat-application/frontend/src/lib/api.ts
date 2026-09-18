@@ -39,8 +39,18 @@ export const getUsers = () => apiRequest("/users");
 export const getOrCreateConversation = (recipientId: string) =>
   apiRequest("/conversations", { method: "POST", body: { recipientId } });
 
-export const getMessages = (conversationId: string) =>
-  apiRequest(`/conversations/${conversationId}/messages`);
+export const getMessages = (
+  conversationId: string,
+  params?: { page?: number; limit?: number },
+) => {
+  const query = new URLSearchParams();
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return apiRequest(
+    `/conversations/${conversationId}/messages${qs ? `?${qs}` : ""}`,
+  );
+};
 
 export const getConversations = () => apiRequest("/conversations");
 

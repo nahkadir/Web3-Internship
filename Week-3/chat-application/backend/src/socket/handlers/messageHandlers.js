@@ -1,6 +1,8 @@
 import {
   createMessage,
   markMessagesAsRead,
+  editMessage,
+  deleteMessage,
 } from "../../services/messageService.js";
 import { getConversationMemberIds } from "../../services/conversationService.js";
 import { getUserSocketIds } from "../presence.js";
@@ -90,6 +92,35 @@ const registerMessageHandlers = (io, socket) => {
     } catch (err) {
       socket.emit("error", {
         message: err.message || "Failed to mark messages as read",
+      });
+    }
+  });
+
+  socket.on("edit_message", async ({ messageId, content }) => {
+    try {
+      const message = await editMessage(messageId, socket.userId, content);
+      io.to(message.conversationId.toString()).emit("message_edited", {
+        messageId: message._id,
+        content: message.content,
+        edited: true,
+      });
+    } catch (err) {
+      socket.emit("error", {
+        message: err.message || "Failed to edit message",
+      });
+    }
+  });
+
+  socket.on("delete_message", async ({ messageId }) => {
+    try {
+      const message = await deleteMessage(messageId, socket.userId);
+      io.to(message.conversationId.toString()).emit("message_deleted", {
+        messageId: message._id,
+        content: message.content,
+      });
+    } catch (err) {
+      socket.emit("error", {
+        message: err.message || "Failed to delete message",
       });
     }
   });

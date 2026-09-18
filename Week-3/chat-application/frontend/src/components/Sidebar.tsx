@@ -56,49 +56,51 @@ const Sidebar = ({
         + New
       </button>
     </div>
-    {conversations.map((c) => (
-      <button
-        key={c.id}
-        onClick={() => onSelectConversation(c)}
-        className={`w-full text-left px-3 py-2 rounded-card text-body cursor-pointer transition-colors ${
-          activeConversationId === c.id
-            ? "bg-primary-tint"
-            : "hover:bg-surface-muted"
-        }`}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-2 truncate">
-            {c.type === "private" && (
-              <span
-                className={`w-2 h-2 rounded-pill shrink-0 ${
-                  isOnline(c, currentUserId, onlineUserIds)
-                    ? "bg-green-500"
-                    : "bg-gray-400"
-                }`}
-              />
+    <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-2">
+      {conversations.map((c) => (
+        <button
+          key={c.id}
+          onClick={() => onSelectConversation(c)}
+          className={`w-full text-left px-3 py-2 rounded-card text-body cursor-pointer transition-colors ${
+            activeConversationId === c.id
+              ? "bg-primary-tint"
+              : "hover:bg-surface-muted"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2 truncate">
+              {c.type === "private" && (
+                <span
+                  className={`w-2 h-2 rounded-pill shrink-0 ${
+                    isOnline(c, currentUserId, onlineUserIds)
+                      ? "bg-green-500"
+                      : "bg-gray-400"
+                  }`}
+                />
+              )}
+              <span className="font-medium truncate">
+                {getDisplayName(c, currentUserId)}
+              </span>
+            </span>
+            {c.lastMessage && (
+              <span className="text-tiny text-text-secondary shrink-0">
+                {formatTime(c.lastMessage.createdAt ?? c.updatedAt)}
+              </span>
             )}
-            <span className="font-medium truncate">
-              {getDisplayName(c, currentUserId)}
-            </span>
-          </span>
+            {c.unreadCount > 0 && (
+              <span className="text-tiny bg-primary text-white rounded-pill flex items-center justify-center w-5 h-5 shrink-0">
+                {c.unreadCount}
+              </span>
+            )}
+          </div>
           {c.lastMessage && (
-            <span className="text-tiny text-text-secondary shrink-0">
-              {formatTime(c.lastMessage.createdAt ?? c.updatedAt)}
-            </span>
+            <p className="text-tiny text-text-secondary truncate mt-0.5">
+              {c.lastMessage.content}
+            </p>
           )}
-          {c.unreadCount > 0 && (
-            <span className="text-tiny bg-primary text-white rounded-pill flex items-center justify-center w-5 h-5 shrink-0">
-              {c.unreadCount}
-            </span>
-          )}
-        </div>
-        {c.lastMessage && (
-          <p className="text-tiny text-text-secondary truncate mt-0.5">
-            {c.lastMessage.content}
-          </p>
-        )}
-      </button>
-    ))}
+        </button>
+      ))}
+    </div>
   </div>
 );
 

@@ -29,6 +29,41 @@ const ChatPage = () => {
 
   const [showNewChat, setShowNewChat] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const loadOlderMessages = async () => {
+    if (!activeConversation || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+
+    const nextPage = page + 1;
+    const { messages: older, hasMore: more } = await getMessages(
+      activeConversation.id,
+      {
+        page: nextPage,
+      },
+    );
+
+    setMessages((prev) => [
+      ...older.map((m: any) => ({
+        id: m._id,
+        conversationId: m.conversationId,
+        senderId: m.senderId,
+        content: m.content,
+        createdAt: m.createdAt,
+        deliveredTo: m.deliveredTo ?? [],
+        readBy: m.readBy ?? [],
+        edited: m.edited ?? false,
+        deleted: m.deleted ?? false,
+      })),
+      ...prev,
+    ]);
+    setPage(nextPage);
+    setHasMore(more);
+    setLoadingMore(false);
+  };
+
   const handleConversationCreated = async (conversationId: string) => {
     const data = await getConversations();
     setConversations(data.conversations);
@@ -174,9 +209,14 @@ const ChatPage = () => {
       });
     }
 
-    const { messages: history } = await getMessages(conversation.id);
+    const { messages: history, hasMore: more } = await getMessages(
+      conversation.id,
+      { page: 1 },
+    );
 
     setActiveConversation(conversation);
+    setPage(1);
+    setHasMore(more);
     setMessages(
       history.map((m: any) => ({
         id: m._id,
@@ -186,6 +226,8 @@ const ChatPage = () => {
         createdAt: m.createdAt,
         deliveredTo: m.deliveredTo ?? [],
         readBy: m.readBy ?? [],
+        edited: m.edited ?? false,
+        deleted: m.deleted ?? false,
       })),
     );
 
@@ -250,7 +292,7 @@ const ChatPage = () => {
         </button>
       </div>
 
-      <div className="bg-surface rounded-panel flex-1 flex overflow-hidden">
+      <div className="bg-surface rounded-panel flex-1 flex overflow-hidden h-[calc(100vh-1.5rem)]">
         <Sidebar
           conversations={conversations}
           activeConversationId={activeConversation?.id}
@@ -279,6 +321,9 @@ const ChatPage = () => {
                 messages={messages}
                 currentUserId={user?.id}
                 activeConversation={activeConversation}
+                onLoadOlder={loadOlderMessages}
+                hasMore={hasMore}
+                loadingMore={loadingMore}
               />
               <TypingIndicator
                 typingUsers={typingUsers}
