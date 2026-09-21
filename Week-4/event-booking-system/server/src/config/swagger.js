@@ -16,8 +16,30 @@ export const swaggerSpec = swaggerJsdoc({
     info: {
       title: "Event Booking API",
       version: "1.0.0",
-      description: "Event Booking System backend",
+      description: `
+Event Booking System backend (Day 1: auth, events, RBAC).
+
+**Authentication**: register or log in, then click **Authorize** and paste the token (without "Bearer").
+
+**Roles**
+- USER: view events and event details
+- ADMIN: create, update and delete/cancel events
+
+**Response format**
+- Success: \`{ success: true, message, data }\`
+- Error: \`{ success: false, message, errors? }\`
+
+**Delete rule**: an event with booked seats cannot be deleted (409). Cancel it by setting its status to CANCELLED.
+`,
     },
+    tags: [
+      { name: "Health", description: "Service status" },
+      { name: "Auth", description: "Registration, login and profile" },
+      {
+        name: "Events",
+        description: "Event management (write operations are ADMIN only)",
+      },
+    ],
     servers: [{ url: "/api" }],
     components: {
       securitySchemes: {
