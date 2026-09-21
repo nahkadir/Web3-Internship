@@ -27,3 +27,7 @@ export const removeUserSocket = (userId, socketId) => {
 export const isUserOnline = (userId) => onlineUsers.has(userId);
 
 export const getOnlineUserIds = () => Array.from(onlineUsers.keys());
+
+// a way to get a user's live socket IDs
+export const getUserSocketIds = (userId) =>
+  onlineUsers.get(userId) || new Set();

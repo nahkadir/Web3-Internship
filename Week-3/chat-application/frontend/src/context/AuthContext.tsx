@@ -9,6 +9,13 @@ import { apiRequest } from "../lib/api";
 
 // any component can access the authentication state directly
 
+const normalizeUser = (raw: any): User => ({
+  id: raw.id ?? raw._id,
+  name: raw.name,
+  email: raw.email,
+  avatar: raw.avatar,
+});
+
 type User = {
   id: string;
   name: string;
@@ -39,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       try {
         const data = await apiRequest("/auth/me");
-        setUser(data.user);
+        setUser(normalizeUser(data.user));
       } catch {
         localStorage.removeItem("token");
       } finally {
@@ -54,8 +61,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       method: "POST",
       body: { email, password },
     });
+    console.log("login raw response:", data.user);
     localStorage.setItem("token", data.token);
-    setUser(data.user);
+    setUser(normalizeUser(data.user));
   };
 
   const register = async (name: string, email: string, password: string) => {
@@ -64,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       body: { name, email, password },
     });
     localStorage.setItem("token", data.token);
-    setUser(data.user);
+    setUser(normalizeUser(data.user));
   };
 
   const logout = () => {
