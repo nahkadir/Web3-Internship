@@ -1,13 +1,10 @@
 import { Router } from "express";
-import { z } from "zod";
 import healthRoutes from "./health.js";
-import AppError from "../utils/AppError.js";
-import asyncHandler from "../utils/asyncHandler.js";
-import { validate } from "../middleware/validate.js";
-import { sendSuccess } from "../utils/apiResponse.js";
+import authRoutes from "./auth.js";
 
 const router = Router();
 
 router.use("/health", healthRoutes);
+router.use("/auth", authRoutes);
 
 export default router;
