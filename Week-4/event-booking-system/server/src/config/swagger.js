@@ -1,5 +1,15 @@
 import swaggerJsdoc from "swagger-jsdoc";
 
+// reusable error responses
+const errorResponse = (description) => ({
+  description,
+  content: {
+    "application/json": {
+      schema: { $ref: "#/components/schemas/ErrorResponse" },
+    },
+  },
+});
+
 export const swaggerSpec = swaggerJsdoc({
   definition: {
     openapi: "3.0.3",
@@ -39,6 +49,13 @@ export const swaggerSpec = swaggerJsdoc({
             },
           },
         },
+      },
+      responses: {
+        ValidationError: errorResponse("Validation failed"),
+        Unauthorized: errorResponse("Missing, invalid or expired token"),
+        Forbidden: errorResponse("Insufficient role"),
+        NotFound: errorResponse("Resource not found"),
+        Conflict: errorResponse("Conflict with current state"),
       },
     },
   },
