@@ -1,6 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
-import { registerUser, loginUser } from "../services/authService.js";
+import { registerUser, loginUser } from "../services/auth.service.js";
 
 export const register = asyncHandler(async (req, res) => {
   const data = await registerUser(req.body);
@@ -14,4 +14,8 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const data = await loginUser(req.body);
   sendSuccess(res, { message: "Login successful", data });
+});
+
+export const getMe = asyncHandler(async (req, res) => {
+  sendSuccess(res, { message: "Profile fetched", data: { user: req.user } });
 });

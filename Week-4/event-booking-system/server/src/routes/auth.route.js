@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { register, login } from "../controllers/authController.js";
+import { register, login, getMe } from "../controllers/auth.controller.js";
 import { validate } from "../middleware/validate.js";
-import { registerSchema, loginSchema } from "../validators/authValidator.js";
+import { registerSchema, loginSchema } from "../validators/auth.validator.js";
+import { protect, authorize } from "../middleware/auth.js";
+import { sendSuccess } from "../utils/apiResponse.js";
 
 const router = Router();
 
@@ -108,5 +110,37 @@ router.post("/register", validate(registerSchema), register);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post("/login", validate(loginSchema), login);
+
+/**
+ * @openapi
+ * /auth/me:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get the authenticated user's profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile fetched
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: Profile fetched }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Missing, invalid or expired token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get("/me", protect, getMe);
 
 export default router;
