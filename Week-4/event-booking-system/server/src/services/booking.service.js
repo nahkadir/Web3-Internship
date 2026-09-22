@@ -49,3 +49,22 @@ export const createBooking = async (userId, { eventId, quantity }) => {
     await session.endSession();
   }
 };
+
+export const listMyBookings = async (userId) =>
+  Booking.find({ userId })
+    .sort({ createdAt: -1 })
+    .populate("eventId", "title startDate location status");
+
+export const getMyBookingById = async (userId, bookingId) => {
+  const booking = await Booking.findById(bookingId).populate(
+    "eventId",
+    "title startDate location status",
+  );
+
+  if (!booking) throw new AppError("Booking not found", 404);
+  if (!booking.userId.equals(userId)) {
+    throw new AppError("You do not have access to this booking", 403);
+  }
+
+  return booking;
+};

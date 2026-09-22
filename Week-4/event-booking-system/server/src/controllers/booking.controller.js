@@ -10,3 +10,16 @@ export const createBooking = asyncHandler(async (req, res) => {
     data: { booking },
   });
 });
+
+export const getMyBookings = asyncHandler(async (req, res) => {
+  const bookings = await bookingService.listMyBookings(req.user._id);
+  sendSuccess(res, { message: "Bookings fetched", data: { bookings } });
+});
+
+export const getMyBooking = asyncHandler(async (req, res) => {
+  const booking = await bookingService.getMyBookingById(
+    req.user._id,
+    req.params.id,
+  );
+  sendSuccess(res, { message: "Booking fetched", data: { booking } });
+});

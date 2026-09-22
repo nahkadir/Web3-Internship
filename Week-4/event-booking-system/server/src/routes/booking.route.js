@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { createBooking } from "../controllers/booking.controller.js";
+import {
+  createBooking,
+  getMyBookings,
+  getMyBooking,
+} from "../controllers/booking.controller.js";
+import { validateObjectId } from "../middleware/validateObjectId.js";
 import { protect } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
 import { createBookingSchema } from "../validators/booking.validator.js";
@@ -70,5 +75,66 @@ const router = Router();
  *         $ref: '#/components/responses/Conflict'
  */
 router.post("/", protect, validate(createBookingSchema), createBooking);
+
+/**
+ * @openapi
+ * /bookings:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: List the authenticated user's own bookings
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Bookings fetched
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: Bookings fetched }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     bookings:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Booking'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get("/", protect, getMyBookings);
+
+/**
+ * @openapi
+ * /bookings/{id}:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: Get one of the authenticated user's own bookings
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Booking fetched
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BookingResult'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get("/:id", protect, validateObjectId("booking"), getMyBooking);
 
 export default router;
