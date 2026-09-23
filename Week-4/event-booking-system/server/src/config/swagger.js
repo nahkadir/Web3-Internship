@@ -39,6 +39,11 @@ Event Booking System backend (Day 1: auth, events, RBAC).
         name: "Events",
         description: "Event management (write operations are ADMIN only)",
       },
+      {
+        name: "Bookings",
+        description:
+          "Seat reservations for events, scoped to the authenticated user",
+      },
     ],
     servers: [{ url: "/api" }],
     components: {
