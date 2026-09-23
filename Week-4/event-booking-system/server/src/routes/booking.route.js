@@ -3,6 +3,7 @@ import {
   createBooking,
   getMyBookings,
   getMyBooking,
+  cancelMyBooking,
 } from "../controllers/booking.controller.js";
 import { validateObjectId } from "../middleware/validateObjectId.js";
 import { protect } from "../middleware/auth.js";
@@ -136,5 +137,44 @@ router.get("/", protect, getMyBookings);
  *         $ref: '#/components/responses/NotFound'
  */
 router.get("/:id", protect, validateObjectId("booking"), getMyBooking);
+
+/**
+ * @openapi
+ * /bookings/{id}/cancel:
+ *   patch:
+ *     tags: [Bookings]
+ *     summary: Cancel one of the authenticated user's own bookings
+ *     description: Restores the booked quantity to the event's availableSeats. Cannot be applied twice to the same booking.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Booking cancelled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BookingResult'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       409:
+ *         $ref: '#/components/responses/Conflict'
+ */
+router.patch(
+  "/:id/cancel",
+  protect,
+  validateObjectId("booking"),
+  cancelMyBooking,
+);
 
 export default router;

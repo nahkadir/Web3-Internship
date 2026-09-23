@@ -68,3 +68,47 @@ export const getMyBookingById = async (userId, bookingId) => {
 
   return booking;
 };
+
+export const cancelBooking = async (userId, bookingId) => {
+  const session = await mongoose.startSession();
+
+  try {
+    let booking;
+
+    await session.withTransaction(async () => {
+      const existing = await Booking.findById(bookingId).session(session);
+      if (!existing) throw new AppError("Booking not found", 404);
+      if (!existing.userId.equals(userId)) {
+        throw new AppError("You do not have access to this booking", 403);
+      }
+      if (existing.status === "CANCELLED") {
+        throw new AppError("Booking is already cancelled", 409);
+      }
+
+      // Atomic status flip: only succeeds if the booking is still cancellable
+      // at the moment of the update, so two simultaneous cancel calls can't
+      // both pass and restore seats twice.
+      const updated = await Booking.findOneAndUpdate(
+        { _id: bookingId, status: { $ne: "CANCELLED" } },
+        { status: "CANCELLED" },
+        { new: true, session },
+      );
+
+      if (!updated) {
+        throw new AppError("Booking is already cancelled", 409);
+      }
+
+      await Event.findByIdAndUpdate(
+        updated.eventId,
+        { $inc: { availableSeats: updated.quantity } },
+        { session },
+      );
+
+      booking = updated;
+    });
+
+    return booking;
+  } finally {
+    await session.endSession();
+  }
+};

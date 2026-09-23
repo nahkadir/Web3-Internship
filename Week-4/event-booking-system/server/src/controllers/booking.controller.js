@@ -23,3 +23,14 @@ export const getMyBooking = asyncHandler(async (req, res) => {
   );
   sendSuccess(res, { message: "Booking fetched", data: { booking } });
 });
+
+export const cancelMyBooking = asyncHandler(async (req, res) => {
+  const booking = await bookingService.cancelBooking(
+    req.user._id,
+    req.params.id,
+  );
+  sendSuccess(res, {
+    message: "Booking cancelled successfully",
+    data: { booking },
+  });
+});
