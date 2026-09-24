@@ -30,6 +30,14 @@ const normalizeError = (err) => {
     return new AppError("Invalid JSON body", 400);
   }
 
+  if (err.errorLabels?.includes("TransientTransactionError")) {
+    return new AppError("Seats are no longer available, please try again", 409);
+  }
+
+  if (err.code === 112 || err.codeName === "WriteConflict") {
+    return new AppError("Seats are no longer available, please try again", 409);
+  }
+
   return err;
 };
 
