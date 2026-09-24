@@ -53,3 +53,38 @@ npm run dev
 - Changing `totalSeats` keeps `availableSeats` consistent with already-booked seats; it cannot go below the booked count.
 - **Delete behavior:** an event with booked seats (`availableSeats < totalSeats`) cannot be deleted (`409`). Cancel it by setting `status` to `CANCELLED` via `PATCH`.
 - Registration always creates a `USER`; admins are created with `npm run seed:admin`.
+
+## Concurrency: the booking race condition
+
+### The problem
+
+A naive booking flow — read `availableSeats`, check it in application code,
+then write the new value — is not safe under concurrent requests. Two
+requests can both read the same "before" value before either writes,
+both pass the check, and both write, causing a lost update where the
+final seat count doesn't reflect both bookings (a classic
+"check-then-act" race condition).
+
+### Why application-level checks aren't enough
+
+The check and the write are separate round-trips to the database. Node.js
+processes other requests' code while one request is `await`ing a database
+call, so the gap between "read" and "write" is a real window where
+another request's read/write can interleave. No amount of `if`-statement
+logic closes a gap that exists between two separate network calls.
+
+### The fix
+
+`Event.findOneAndUpdate({ _id, availableSeats: { $gte: quantity } }, { $inc: { availableSeats: -quantity } })`
+performs the condition check and the update as a single atomic operation
+on one document. MongoDB guarantees no other write to that document can
+be interleaved inside it. A losing request's filter simply fails to
+match (seats already gone), and `findOneAndUpdate` returns `null` instead
+of applying a stale calculation.
+
+### Booking creation + seat deduction as one unit
+
+The atomic seat deduction and the `Booking.create` call are wrapped in a
+MongoDB transaction (`session.withTransaction`). This guarantees both
+succeed together or both roll back together — never seats-deducted-with-
+no-booking, and never booking-created-with-no-seat-deduction.
