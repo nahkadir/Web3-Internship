@@ -88,3 +88,23 @@ The atomic seat deduction and the `Booking.create` call are wrapped in a
 MongoDB transaction (`session.withTransaction`). This guarantees both
 succeed together or both roll back together — never seats-deducted-with-
 no-booking, and never booking-created-with-no-seat-deduction.
+
+### Verified under load (Day 3)
+
+Ran configurable concurrency tests (`scripts/concurrency-test.js`) at three scales
+(10/20, 50/100, 100/500 seats-vs-requests). At every scale, the invariant held
+exactly: `successful bookings + remaining seats = total seats`, with zero
+overbooking and zero negative seat counts, confirming the atomic
+`findOneAndUpdate` pattern is correct under real concurrent load, not just in
+theory.
+
+**Known issue found:** at 50+ simultaneous requests against one event,
+response times degraded severely (up to ~74s), traced to MongoDB's built-in
+transaction auto-retry causing a thundering-herd effect on the single hot
+document — many competing transactions retrying near-simultaneously and
+repeatedly re-colliding. Correctness was unaffected; this is a performance
+issue, not a correctness issue. Planned fix: replace the transaction wrapping
+seat deduction + booking creation with a standalone atomic `findOneAndUpdate`
+for the seat deduction, followed by booking creation with a compensating
+rollback (`$inc` seats back) on failure — removing transaction-retry overhead
+from the single-document hot path.
