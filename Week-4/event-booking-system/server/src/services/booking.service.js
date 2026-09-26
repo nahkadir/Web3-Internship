@@ -43,6 +43,11 @@ export const createBooking = async (userId, { eventId, quantity }) => {
         { session },
       );
       booking = created[0];
+
+      // TEMP: Day 4 Task 6 reverse-scenario test hook - remove after testing
+      // if (globalThis.__TEST_FAIL_AFTER_BOOKING_CREATE__) {
+      //   throw new Error("Simulated failure after booking creation");
+      // }
     });
 
     return booking;
