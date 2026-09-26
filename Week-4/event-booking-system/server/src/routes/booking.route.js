@@ -53,6 +53,12 @@ const router = Router();
  *     summary: Book seats for an event
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Idempotency-Key
+ *         required: false
+ *         schema: { type: string }
+ *         description: Optional client-generated key to make retries safe
  *     requestBody:
  *       required: true
  *       content:
@@ -74,6 +80,8 @@ const router = Router();
  *         $ref: '#/components/responses/NotFound'
  *       409:
  *         $ref: '#/components/responses/Conflict'
+ *       422:
+ *         description: Idempotency key reused for a different request
  */
 router.post("/", protect, validate(createBookingSchema), createBooking);
 

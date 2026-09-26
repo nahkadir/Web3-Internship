@@ -1,14 +1,42 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import * as bookingService from "../services/booking.service.js";
+import { withIdempotency } from "../services/idempotency.service.js";
 
 export const createBooking = asyncHandler(async (req, res) => {
-  const booking = await bookingService.createBooking(req.user._id, req.body);
-  sendSuccess(res, {
-    statusCode: 201,
-    message: "Booking created successfully",
-    data: { booking },
-  });
+  const idempotencyKey = req.headers["idempotency-key"];
+
+  // No key provided: behave exactly as before, no idempotency guarantee.
+  if (!idempotencyKey) {
+    const booking = await bookingService.createBooking(req.user._id, req.body);
+    return sendSuccess(res, {
+      statusCode: 201,
+      message: "Booking created successfully",
+      data: { booking },
+    });
+  }
+
+  const { statusCode, body } = await withIdempotency(
+    req.user._id,
+    idempotencyKey,
+    req.body,
+    async () => {
+      const booking = await bookingService.createBooking(
+        req.user._id,
+        req.body,
+      );
+      return {
+        statusCode: 201,
+        body: {
+          success: true,
+          message: "Booking created successfully",
+          data: { booking },
+        },
+      };
+    },
+  );
+
+  res.status(statusCode).json(body);
 });
 
 export const getMyBookings = asyncHandler(async (req, res) => {
