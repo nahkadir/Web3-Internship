@@ -33,6 +33,9 @@ export const updateEventSchema = baseEvent
 export const listEventsQuerySchema = z.object({
   status: z.enum(EVENT_STATUSES).optional(),
   available: z.enum(["true", "false"]).optional(),
+  location: z.string().trim().min(1).optional(),
+  startAfter: z.coerce.date().optional(),
+  startBefore: z.coerce.date().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
 });

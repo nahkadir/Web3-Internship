@@ -43,11 +43,6 @@ export const createBooking = async (userId, { eventId, quantity }) => {
         { session },
       );
       booking = created[0];
-
-      // TEMP: Day 4 Task 6 reverse-scenario test hook - remove after testing
-      // if (globalThis.__TEST_FAIL_AFTER_BOOKING_CREATE__) {
-      //   throw new Error("Simulated failure after booking creation");
-      // }
     });
 
     return booking;
@@ -56,10 +51,25 @@ export const createBooking = async (userId, { eventId, quantity }) => {
   }
 };
 
-export const listMyBookings = async (userId) =>
-  Booking.find({ userId })
-    .sort({ createdAt: -1 })
-    .populate("eventId", "title startDate location status");
+export const listMyBookings = async (userId, { status, page, limit }) => {
+  const filter = { userId };
+  if (status) filter.status = status;
+
+  const [bookings, total] = await Promise.all([
+    Booking.find(filter)
+      .select("quantity totalAmount status createdAt eventId")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate("eventId", "title startDate location status"),
+    Booking.countDocuments(filter),
+  ]);
+
+  return {
+    bookings,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  };
+};
 
 export const getMyBookingById = async (userId, bookingId) => {
   const booking = await Booking.findById(bookingId).populate(

@@ -40,8 +40,11 @@ export const createBooking = asyncHandler(async (req, res) => {
 });
 
 export const getMyBookings = asyncHandler(async (req, res) => {
-  const bookings = await bookingService.listMyBookings(req.user._id);
-  sendSuccess(res, { message: "Bookings fetched", data: { bookings } });
+  const data = await bookingService.listMyBookings(
+    req.user._id,
+    req.validated.query,
+  );
+  sendSuccess(res, { message: "Bookings fetched", data });
 });
 
 export const getMyBooking = asyncHandler(async (req, res) => {

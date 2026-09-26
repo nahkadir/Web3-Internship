@@ -4,13 +4,30 @@ import AppError from "../utils/AppError.js";
 export const createEvent = async (data, userId) =>
   Event.create({ ...data, createdBy: userId });
 
-export const listEvents = async ({ status, available, page, limit }) => {
+export const listEvents = async ({
+  status,
+  available,
+  location,
+  startAfter,
+  startBefore,
+  page,
+  limit,
+}) => {
   const filter = {};
   if (status) filter.status = status;
   if (available) filter.availableSeats = available === "true" ? { $gt: 0 } : 0;
+  if (location) filter.location = { $regex: location, $options: "i" };
+  if (startAfter || startBefore) {
+    filter.startDate = {};
+    if (startAfter) filter.startDate.$gte = startAfter;
+    if (startBefore) filter.startDate.$lte = startBefore;
+  }
 
   const [events, total] = await Promise.all([
     Event.find(filter)
+      .select(
+        "title location startDate endDate totalSeats availableSeats price status",
+      )
       .sort({ startDate: 1 })
       .skip((page - 1) * limit)
       .limit(limit),

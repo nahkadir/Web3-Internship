@@ -5,10 +5,13 @@ import {
   getMyBooking,
   cancelMyBooking,
 } from "../controllers/booking.controller.js";
-import { validateObjectId } from "../middleware/validateObjectId.js";
 import { protect } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
-import { createBookingSchema } from "../validators/booking.validator.js";
+import { validateObjectId } from "../middleware/validateObjectId.js";
+import {
+  createBookingSchema,
+  listBookingsQuerySchema,
+} from "../validators/booking.validator.js";
 
 const router = Router();
 
@@ -43,6 +46,25 @@ const router = Router();
  *           properties:
  *             booking:
  *               $ref: '#/components/schemas/Booking'
+ *     BookingList:
+ *       type: object
+ *       properties:
+ *         success: { type: boolean, example: true }
+ *         message: { type: string, example: Bookings fetched }
+ *         data:
+ *           type: object
+ *           properties:
+ *             bookings:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Booking'
+ *             pagination:
+ *               type: object
+ *               properties:
+ *                 page: { type: integer }
+ *                 limit: { type: integer }
+ *                 total: { type: integer }
+ *                 totalPages: { type: integer }
  */
 
 /**
@@ -82,38 +104,38 @@ const router = Router();
  *         $ref: '#/components/responses/Conflict'
  *       422:
  *         description: Idempotency key reused for a different request
- */
-router.post("/", protect, validate(createBookingSchema), createBooking);
-
-/**
- * @openapi
- * /bookings:
  *   get:
  *     tags: [Bookings]
  *     summary: List the authenticated user's own bookings
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [PENDING, CONFIRMED, CANCELLED] }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
  *     responses:
  *       200:
  *         description: Bookings fetched
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success: { type: boolean, example: true }
- *                 message: { type: string, example: Bookings fetched }
- *                 data:
- *                   type: object
- *                   properties:
- *                     bookings:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/Booking'
+ *               $ref: '#/components/schemas/BookingList'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.get("/", protect, getMyBookings);
+router.post("/", protect, validate(createBookingSchema), createBooking);
+router.get(
+  "/",
+  protect,
+  validate(listBookingsQuerySchema, "query"),
+  getMyBookings,
+);
 
 /**
  * @openapi
