@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import IdempotencyKey from "../models/IdempotencyKey.js";
 import AppError from "../utils/AppError.js";
+import { logger } from "../config/logger.js";
 
 export const hashRequest = (payload) =>
   crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
@@ -35,6 +36,11 @@ export const withIdempotency = async (
       throw new AppError("Idempotency key conflict, please retry", 409);
 
     if (existing.requestHash !== requestHash) {
+      logger.warn("Idempotency key reused for different request", {
+        userId: String(userId),
+        idempotencyKey,
+      });
+
       throw new AppError(
         "Idempotency key was already used for a different request",
         422,
@@ -50,6 +56,11 @@ export const withIdempotency = async (
     }
 
     if (existing.status === "PENDING") {
+      logger.warn("Idempotency conflict", {
+        userId: String(userId),
+        idempotencyKey,
+      });
+
       throw new AppError(
         "A request with this idempotency key is already being processed",
         409,

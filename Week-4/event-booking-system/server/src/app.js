@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { logger } from "./config/logger.js";
 import { env } from "./config/env.js";
 import routes from "./routes/index.js";
 import { notFound } from "./middleware/notFound.js";
@@ -23,7 +24,16 @@ app.use(
 app.use(helmet());
 app.use(cors({ origin: env.clientUrl, credentials: true }));
 app.use(express.json());
-if (env.nodeEnv === "development") app.use(morgan("dev"));
+
+if (env.nodeEnv === "development") {
+  app.use(morgan("dev"));
+} else {
+  app.use(
+    morgan("combined", {
+      stream: { write: (message) => logger.info(message.trim()) },
+    }),
+  );
+}
 
 app.use("/api", routes);
 

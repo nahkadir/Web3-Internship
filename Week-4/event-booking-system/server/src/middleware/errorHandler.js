@@ -1,5 +1,6 @@
 import { env } from "../config/env.js";
 import AppError from "../utils/AppError.js";
+import { logger } from "../config/logger.js";
 
 const normalizeError = (err) => {
   if (err instanceof AppError) return err;
@@ -31,6 +32,11 @@ const normalizeError = (err) => {
   }
 
   if (err.errorLabels?.includes("TransientTransactionError")) {
+    logger.error("Transaction rolled back", {
+      errorLabels: err.errorLabels,
+      code: err.code,
+    });
+
     return new AppError("Seats are no longer available, please try again", 409);
   }
 

@@ -3,8 +3,15 @@ import Event from "../models/Event.js";
 import Booking from "../models/Booking.js";
 import AppError from "../utils/AppError.js";
 import { isTransitionAllowed } from "../utils/bookingStateMachine.js";
+import { logger } from "../config/logger.js";
 
 export const createBooking = async (userId, { eventId, quantity }) => {
+  logger.info("Booking request received", {
+    userId: String(userId),
+    eventId,
+    quantity,
+  });
+
   const session = await mongoose.startSession();
 
   try {
@@ -26,6 +33,8 @@ export const createBooking = async (userId, { eventId, quantity }) => {
 
       // Atomic conditional deduction: only succeeds if enough seats remain,
       // so two concurrent requests can't both pass a separate read-then-check.
+
+      logger.info("Seat reservation attempted", { eventId, quantity });
       const updatedEvent = await Event.findOneAndUpdate(
         { _id: eventId, availableSeats: { $gte: quantity } },
         { $inc: { availableSeats: -quantity } },
@@ -33,6 +42,11 @@ export const createBooking = async (userId, { eventId, quantity }) => {
       );
 
       if (!updatedEvent) {
+        logger.warn("Booking rejected", {
+          reason: "insufficient seats",
+          eventId,
+          quantity,
+        });
         throw new AppError("Not enough seats available", 409);
       }
 
@@ -43,6 +57,12 @@ export const createBooking = async (userId, { eventId, quantity }) => {
         { session },
       );
       booking = created[0];
+
+      logger.info("Booking created", {
+        bookingId: String(booking._id),
+        userId: String(userId),
+        eventId,
+      });
     });
 
     return booking;
@@ -126,6 +146,11 @@ export const cancelBooking = async (userId, bookingId) => {
         { $inc: { availableSeats: updated.quantity } },
         { session },
       );
+
+      logger.info("Booking cancelled", {
+        bookingId: String(bookingId),
+        userId: String(userId),
+      });
 
       booking = updated;
     });
