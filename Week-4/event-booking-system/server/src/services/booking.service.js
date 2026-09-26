@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Event from "../models/Event.js";
 import Booking from "../models/Booking.js";
 import AppError from "../utils/AppError.js";
+import { isTransitionAllowed } from "../utils/bookingStateMachine.js";
 
 export const createBooking = async (userId, { eventId, quantity }) => {
   const session = await mongoose.startSession();
@@ -28,7 +29,7 @@ export const createBooking = async (userId, { eventId, quantity }) => {
       const updatedEvent = await Event.findOneAndUpdate(
         { _id: eventId, availableSeats: { $gte: quantity } },
         { $inc: { availableSeats: -quantity } },
-        { new: true, session },
+        { returnDocument: "after", session },
       );
 
       if (!updatedEvent) {
@@ -85,13 +86,20 @@ export const cancelBooking = async (userId, bookingId) => {
         throw new AppError("Booking is already cancelled", 409);
       }
 
+      if (!isTransitionAllowed(existing.status, "CANCELLED")) {
+        throw new AppError(
+          `Cannot cancel a booking with status ${existing.status}`,
+          409,
+        );
+      }
+
       // Atomic status flip: only succeeds if the booking is still cancellable
       // at the moment of the update, so two simultaneous cancel calls can't
       // both pass and restore seats twice.
       const updated = await Booking.findOneAndUpdate(
         { _id: bookingId, status: { $ne: "CANCELLED" } },
         { status: "CANCELLED" },
-        { new: true, session },
+        { returnDocument: "after", session },
       );
 
       if (!updated) {
