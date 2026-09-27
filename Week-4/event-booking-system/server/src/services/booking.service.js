@@ -31,10 +31,8 @@ export const createBooking = async (userId, { eventId, quantity }) => {
         throw new AppError("Event is not available for booking", 409);
       }
 
-      // Atomic conditional deduction: only succeeds if enough seats remain,
-      // so two concurrent requests can't both pass a separate read-then-check.
-
       logger.info("Seat reservation attempted", { eventId, quantity });
+
       const updatedEvent = await Event.findOneAndUpdate(
         { _id: eventId, availableSeats: { $gte: quantity } },
         { $inc: { availableSeats: -quantity } },
@@ -58,11 +56,16 @@ export const createBooking = async (userId, { eventId, quantity }) => {
       );
       booking = created[0];
 
-      logger.info("Booking created", {
-        bookingId: String(booking._id),
-        userId: String(userId),
-        eventId,
-      });
+      // TEMP: Day 4 Task 6 reverse-scenario hook
+      // if (globalThis.__TEST_FAIL_AFTER_BOOKING_CREATE__) {
+      //   throw new Error("Simulated failure after booking creation");
+      // }
+    });
+
+    logger.info("Booking created", {
+      bookingId: String(booking._id),
+      userId: String(userId),
+      eventId,
     });
 
     return booking;
