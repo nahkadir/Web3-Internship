@@ -2,9 +2,20 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import * as bookingService from "../services/booking.service.js";
 import { withIdempotency } from "../services/idempotency.service.js";
+import AppError from "../utils/AppError.js";
 
 export const createBooking = asyncHandler(async (req, res) => {
   const idempotencyKey = req.headers["idempotency-key"];
+
+  if (
+    idempotencyKey &&
+    (idempotencyKey.length < 1 || idempotencyKey.length > 255)
+  ) {
+    throw new AppError(
+      "Invalid Idempotency-Key: must be between 1 and 255 characters",
+      400,
+    );
+  }
 
   // No key provided: behave exactly as before, no idempotency guarantee.
   if (!idempotencyKey) {
