@@ -18,3 +18,15 @@ export const registerUser = async ({ name, email, password }) => {
     email: user.email,
   };
 };
+
+export const loginUser = async ({ email, password }) => {
+  // password is select:false, so request it explicitly
+  const user = await User.findOne({ email }).select("+password");
+
+  // Same message for "no user" and "wrong password" so emails can't be probed
+  if (!user || !(await user.comparePassword(password))) {
+    throw new ApiError(401, "Invalid email or password");
+  }
+
+  return user; // toJSON strips the password when sent in a response
+};

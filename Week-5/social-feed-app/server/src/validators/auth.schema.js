@@ -21,3 +21,14 @@ export const registerSchema = z.object({
     .regex(/[A-Z]/, "Password must contain an uppercase letter")
     .regex(/[0-9]/, "Password must contain a number"),
 });
+
+export const loginSchema = z.object({
+  email: z
+    .string({ required_error: "Email is required" })
+    .trim()
+    .toLowerCase()
+    .email("Invalid email format"),
+  password: z
+    .string({ required_error: "Password is required" })
+    .min(1, "Password is required"),
+});
