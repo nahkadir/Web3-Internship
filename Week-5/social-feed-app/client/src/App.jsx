@@ -1,9 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import GuestRoute from "./components/GuestRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
+import Feed from "./pages/Feed";
 import Profile from "./pages/Profile";
 
 export default function App() {
@@ -15,8 +16,10 @@ export default function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Feed />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
