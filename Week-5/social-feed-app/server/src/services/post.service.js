@@ -16,3 +16,31 @@ export const createPost = async (authorId, { content, imageUrl }) => {
 // Without populate(), the frontend would receive only the author's ID.
 // If it needs to display the author's name and avatar beside the post,
 // it would need to make another API request to fetch that information.
+
+export const getFeed = async ({ page = 1, limit = 10 }) => {
+  const pageNum = Math.max(1, Number(page) || 1);
+  const limitNum = Math.min(50, Math.max(1, Number(limit) || 10)); // cap to prevent abuse
+  const skip = (pageNum - 1) * limitNum;
+
+  const [posts, total] = await Promise.all([
+    Post.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .populate("author", "name avatar"),
+    Post.countDocuments(),
+  ]);
+
+  const totalPages = Math.ceil(total / limitNum) || 1;
+
+  return {
+    posts,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages,
+      hasMore: pageNum < totalPages,
+    },
+  };
+};

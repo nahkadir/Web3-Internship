@@ -5,3 +5,9 @@ export const createPost = asyncHandler(async (req, res) => {
   const post = await postService.createPost(req.user._id, req.body);
   res.status(201).json({ message: "Post created", post });
 });
+
+export const getFeed = asyncHandler(async (req, res) => {
+  const { page, limit } = req.query;
+  const { posts, pagination } = await postService.getFeed({ page, limit });
+  res.status(200).json({ posts, pagination });
+});
