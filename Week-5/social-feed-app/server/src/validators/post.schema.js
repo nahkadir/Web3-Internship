@@ -15,3 +15,17 @@ export const createPostSchema = z.object({
     .max(500, "Content must be at most 500 characters"),
   imageUrl: urlOrEmpty,
 });
+
+export const updatePostSchema = z
+  .object({
+    content: z
+      .string()
+      .trim()
+      .min(1, "Content cannot be empty")
+      .max(500, "Content must be at most 500 characters")
+      .optional(),
+    imageUrl: urlOrEmpty,
+  })
+  .refine((data) => data.content !== undefined || data.imageUrl !== undefined, {
+    message: "Provide at least one field to update",
+  });

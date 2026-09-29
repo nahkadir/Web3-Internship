@@ -51,3 +51,30 @@ export const getPostById = async (id) => {
   if (!post) throw new ApiError(404, "Post not found");
   return post;
 };
+
+export const updatePost = async (postId, userId, updates) => {
+  const post = await Post.findById(postId);
+  if (!post) throw new ApiError(404, "Post not found");
+
+  if (post.author.toString() !== userId.toString()) {
+    throw new ApiError(403, "You can only update your own posts");
+  }
+
+  if (updates.content !== undefined) post.content = updates.content;
+  if (updates.imageUrl !== undefined) post.imageUrl = updates.imageUrl;
+
+  await post.save(); // triggers validation + updates updatedAt
+  await post.populate("author", "name avatar");
+  return post;
+};
+
+export const deletePost = async (postId, userId) => {
+  const post = await Post.findById(postId);
+  if (!post) throw new ApiError(404, "Post not found");
+
+  if (post.author.toString() !== userId.toString()) {
+    throw new ApiError(403, "You can only delete your own posts");
+  }
+
+  await post.deleteOne();
+};
