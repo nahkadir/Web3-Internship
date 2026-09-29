@@ -31,7 +31,6 @@ export default function Login() {
     setLoading(true);
     try {
       await login(form);
-      // GuestRoute redirects to /dashboard automatically once user is set
     } catch (err) {
       if (err.errors?.length) {
         const fieldErrors = {};
@@ -45,18 +44,18 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-200">
-        <h1 className="text-2xl font-semibold text-gray-900">Welcome back</h1>
-        <p className="mt-1 text-sm text-gray-500">Log in to see your feed.</p>
+    <div className="flex min-h-screen items-center justify-center bg-bg px-4">
+      <div className="w-full max-w-md rounded-2xl border border-hairline bg-bg p-8">
+        <h1 className="text-2xl font-semibold text-text">Welcome back</h1>
+        <p className="mt-1 text-sm text-secondary">Log in to see your feed.</p>
 
         {location.state?.registered && !apiError && (
-          <div className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+          <div className="mt-4 rounded-lg bg-green-950/40 px-3 py-2 text-sm text-green-400">
             Registration successful. Please log in.
           </div>
         )}
         {apiError && (
-          <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mt-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
             {apiError}
           </div>
         )}
@@ -84,17 +83,17 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-x-blue py-2 text-sm font-bold text-white transition hover:bg-x-blue-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className="mt-6 text-center text-sm text-secondary">
           New here?{" "}
           <Link
             to="/register"
-            className="font-medium text-indigo-600 hover:underline"
+            className="font-medium text-x-blue hover:underline"
           >
             Create an account
           </Link>
