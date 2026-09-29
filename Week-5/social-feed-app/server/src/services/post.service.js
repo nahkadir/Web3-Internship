@@ -1,3 +1,4 @@
+import { ApiError } from "../utils/ApiError.js";
 import Post from "../models/Post.js";
 
 export const createPost = async (authorId, { content, imageUrl }) => {
@@ -43,4 +44,10 @@ export const getFeed = async ({ page = 1, limit = 10 }) => {
       hasMore: pageNum < totalPages,
     },
   };
+};
+
+export const getPostById = async (id) => {
+  const post = await Post.findById(id).populate("author", "name avatar");
+  if (!post) throw new ApiError(404, "Post not found");
+  return post;
 };

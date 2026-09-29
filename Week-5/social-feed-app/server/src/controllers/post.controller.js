@@ -11,3 +11,8 @@ export const getFeed = asyncHandler(async (req, res) => {
   const { posts, pagination } = await postService.getFeed({ page, limit });
   res.status(200).json({ posts, pagination });
 });
+
+export const getPost = asyncHandler(async (req, res) => {
+  const post = await postService.getPostById(req.params.id);
+  res.status(200).json({ post });
+});
