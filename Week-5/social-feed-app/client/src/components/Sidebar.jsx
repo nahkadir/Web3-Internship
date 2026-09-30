@@ -19,7 +19,7 @@ export default function Sidebar() {
   return (
     <aside className="sticky top-0 flex h-screen w-[68px] flex-col justify-between py-2 xl:w-[275px]">
       <div>
-        <div className="mb-2 grid h-12 w-12 place-items-center rounded-full text-2xl font-bold hover:bg-hover">
+        <div className="mb-2 grid h-12 w-12 place-items-center select-none text-2xl font-bold">
           𝕏
         </div>
 
