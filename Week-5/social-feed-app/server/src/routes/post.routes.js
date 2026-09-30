@@ -13,7 +13,10 @@ import {
 import { protect } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
 import { likePost, unlikePost } from "../controllers/like.controller.js";
-import { createComment } from "../controllers/comment.controller.js";
+import {
+  createComment,
+  getPostComments,
+} from "../controllers/comment.controller.js";
 import { createCommentSchema } from "../validators/comment.schema.js";
 
 const router = Router();
@@ -33,5 +36,6 @@ router.post(
   validate(createCommentSchema),
   createComment,
 );
+router.get("/:id/comments", getPostComments);
 
 export default router;
