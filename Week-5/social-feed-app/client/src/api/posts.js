@@ -7,3 +7,6 @@ export const createPost = (payload) =>
 export const updatePost = (id, payload) =>
   api(`/posts/${id}`, { method: "PATCH", body: payload });
 export const deletePost = (id) => api(`/posts/${id}`, { method: "DELETE" });
+export const likePost = (id) => api(`/posts/${id}/like`, { method: "POST" });
+export const unlikePost = (id) =>
+  api(`/posts/${id}/like`, { method: "DELETE" });

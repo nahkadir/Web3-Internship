@@ -8,12 +8,15 @@ export const createPost = asyncHandler(async (req, res) => {
 
 export const getFeed = asyncHandler(async (req, res) => {
   const { page, limit } = req.query;
-  const { posts, pagination } = await postService.getFeed({ page, limit });
+  const { posts, pagination } = await postService.getFeed(
+    { page, limit },
+    req.user?._id,
+  );
   res.status(200).json({ posts, pagination });
 });
 
 export const getPost = asyncHandler(async (req, res) => {
-  const post = await postService.getPostById(req.params.id);
+  const post = await postService.getPostById(req.params.id, req.user?._id);
   res.status(200).json({ post });
 });
 

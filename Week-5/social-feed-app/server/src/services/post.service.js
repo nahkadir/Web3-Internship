@@ -1,5 +1,7 @@
 import { ApiError } from "../utils/ApiError.js";
 import Post from "../models/Post.js";
+import Like from "../models/Like.js";
+import Comment from "../models/Comment.js";
 
 export const createPost = async (authorId, { content, imageUrl }) => {
   const post = await Post.create({
@@ -18,9 +20,9 @@ export const createPost = async (authorId, { content, imageUrl }) => {
 // If it needs to display the author's name and avatar beside the post,
 // it would need to make another API request to fetch that information.
 
-export const getFeed = async ({ page = 1, limit = 10 }) => {
+export const getFeed = async ({ page = 1, limit = 10 }, currentUserId) => {
   const pageNum = Math.max(1, Number(page) || 1);
-  const limitNum = Math.min(50, Math.max(1, Number(limit) || 10)); // cap to prevent abuse
+  const limitNum = Math.min(50, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * limitNum;
 
   const [posts, total] = await Promise.all([
@@ -32,10 +34,11 @@ export const getFeed = async ({ page = 1, limit = 10 }) => {
     Post.countDocuments(),
   ]);
 
+  const enriched = await enrichPosts(posts, currentUserId);
   const totalPages = Math.ceil(total / limitNum) || 1;
 
   return {
-    posts,
+    posts: enriched,
     pagination: {
       page: pageNum,
       limit: limitNum,
@@ -46,10 +49,12 @@ export const getFeed = async ({ page = 1, limit = 10 }) => {
   };
 };
 
-export const getPostById = async (id) => {
+export const getPostById = async (id, currentUserId) => {
   const post = await Post.findById(id).populate("author", "name avatar");
   if (!post) throw new ApiError(404, "Post not found");
-  return post;
+
+  const [enriched] = await enrichPosts([post], currentUserId);
+  return enriched;
 };
 
 export const updatePost = async (postId, userId, updates) => {
@@ -77,4 +82,41 @@ export const deletePost = async (postId, userId) => {
   }
 
   await post.deleteOne();
+};
+
+const enrichPosts = async (posts, currentUserId) => {
+  const postIds = posts.map((p) => p._id);
+
+  const [likeCounts, commentCounts, myLikes] = await Promise.all([
+    Like.aggregate([
+      { $match: { post: { $in: postIds } } },
+      { $group: { _id: "$post", count: { $sum: 1 } } },
+    ]),
+    Comment.aggregate([
+      { $match: { post: { $in: postIds } } },
+      { $group: { _id: "$post", count: { $sum: 1 } } },
+    ]),
+    currentUserId
+      ? Like.find({ post: { $in: postIds }, user: currentUserId })
+          .select("post")
+          .lean()
+      : [],
+  ]);
+
+  // Helpers
+
+  const likeCountMap = new Map(
+    likeCounts.map((l) => [l._id.toString(), l.count]),
+  );
+  const commentCountMap = new Map(
+    commentCounts.map((c) => [c._id.toString(), c.count]),
+  );
+  const likedSet = new Set(myLikes.map((l) => l.post.toString()));
+
+  return posts.map((post) => ({
+    ...post.toJSON(),
+    likeCount: likeCountMap.get(post._id.toString()) || 0,
+    commentCount: commentCountMap.get(post._id.toString()) || 0,
+    likedByMe: likedSet.has(post._id.toString()),
+  }));
 };
