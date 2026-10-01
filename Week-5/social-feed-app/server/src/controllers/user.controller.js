@@ -5,3 +5,11 @@ export const getMyProfile = asyncHandler(async (req, res) => {
   const user = await userService.getUserById(req.user._id);
   res.status(200).json({ user });
 });
+
+export const getPublicProfile = asyncHandler(async (req, res) => {
+  const profile = await userService.getPublicProfile(
+    req.params.id,
+    req.user?._id,
+  );
+  res.status(200).json({ user: profile });
+});
