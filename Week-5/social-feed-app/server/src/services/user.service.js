@@ -26,3 +26,15 @@ export const getPublicProfile = async (id, currentUserId) => {
     isFollowing: false,
   };
 };
+
+export const updateMyProfile = async (userId, updates) => {
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (updates.name !== undefined) user.name = updates.name;
+  if (updates.bio !== undefined) user.bio = updates.bio;
+  if (updates.avatar !== undefined) user.avatar = updates.avatar;
+
+  await user.save();
+  return user;
+};
