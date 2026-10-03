@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import Post from "../models/Post.js";
+import Follow from "../models/Follow.js";
 
 export const getUserById = async (id) => {
   const user = await User.findById(id);
@@ -12,7 +13,15 @@ export const getPublicProfile = async (id, currentUserId) => {
   const user = await User.findById(id);
   if (!user) throw new ApiError(404, "User not found");
 
-  const postCount = await Post.countDocuments({ author: id });
+  const [postCount, followersCount, followingCount, isFollowing] =
+    await Promise.all([
+      Post.countDocuments({ author: id }),
+      Follow.countDocuments({ following: id }),
+      Follow.countDocuments({ follower: id }),
+      currentUserId
+        ? Follow.exists({ follower: currentUserId, following: id })
+        : false,
+    ]);
 
   return {
     id: user._id,
@@ -21,9 +30,9 @@ export const getPublicProfile = async (id, currentUserId) => {
     bio: user.bio,
     createdAt: user.createdAt,
     postCount,
-    followersCount: 0,
-    followingCount: 0,
-    isFollowing: false,
+    followersCount,
+    followingCount,
+    isFollowing: Boolean(isFollowing),
   };
 };
 
