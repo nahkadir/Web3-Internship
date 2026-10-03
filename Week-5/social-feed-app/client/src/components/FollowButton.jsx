@@ -35,7 +35,7 @@ export default function FollowButton({
     <button
       onClick={handleClick}
       disabled={busy}
-      className={`${base} rounded-full font-bold transition disabled:opacity-50 ${
+      className={`${base} rounded-full font-bold transition disabled:opacity-50 cursor-pointer ${
         following
           ? "border border-hairline text-text hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
           : "bg-text text-bg hover:opacity-90"

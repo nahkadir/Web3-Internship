@@ -1,11 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import {
-  Home,
-  Search as SearchIcon,
-  User,
-  Feather,
-  LogOut,
-} from "lucide-react";
+import { Home, Search as SearchIcon, User, Feather } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import Avatar from "./Avatar";
 
@@ -26,11 +20,11 @@ export default function Sidebar() {
   return (
     <aside className="sticky top-0 flex h-screen w-[68px] flex-col justify-between py-2 xl:w-[275px]">
       <div>
-        <div className="mb-2 grid h-12 w-12 place-items-center rounded-full text-2xl font-bold hover:bg-hover">
-          𝕏
+        <div className="mb-2 grid h-12 w-12 place-items-center text-4xl font-bold select-none">
+          𝕐
         </div>
 
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col items-start gap-1">
           {navItems.map(({ to, label, Icon }) => (
             <NavLink
               key={to}
@@ -49,7 +43,7 @@ export default function Sidebar() {
 
         <button
           onClick={() => navigate("/dashboard")}
-          className="mt-4 grid h-12 w-12 place-items-center rounded-full bg-x-blue text-white hover:bg-x-blue-hover xl:w-[90%] xl:justify-self-start"
+          className="cursor-pointer mt-4 grid h-12 w-12 place-items-center rounded-full bg-x-blue text-white hover:bg-x-blue-hover xl:w-[90%] xl:justify-self-start"
         >
           <Feather size={20} className="xl:hidden" />
           <span className="hidden xl:inline font-bold">Post</span>
@@ -73,7 +67,6 @@ export default function Sidebar() {
             </p>
             <p className="truncate text-sm text-secondary">Log out</p>
           </div>
-          <LogOut size={16} className="shrink-0 text-secondary" />
         </div>
       </button>
     </aside>
