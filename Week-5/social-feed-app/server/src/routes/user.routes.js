@@ -3,7 +3,9 @@ import {
   getMyProfile,
   getPublicProfile,
   updateMyProfile,
+  searchUsers,
 } from "../controllers/user.controller.js";
+
 import {
   followUser,
   unfollowUser,
@@ -26,5 +28,6 @@ router.get("/:id/followers", optionalAuth, getFollowers);
 router.get("/:id/following", optionalAuth, getFollowing);
 
 router.get("/:id", optionalAuth, getPublicProfile);
+router.get("/", optionalAuth, searchUsers);
 
 export default router;
