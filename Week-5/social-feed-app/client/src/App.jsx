@@ -6,6 +6,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Feed from "./pages/Feed";
 import Profile from "./pages/Profile";
+import Search from "./pages/Search";
+import UserProfile from "./pages/UserProfile";
+import FollowList from "./pages/FollowList";
 
 export default function App() {
   return (
@@ -19,6 +22,9 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Feed />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/users/:id" element={<UserProfile />} />
+          <Route path="/users/:id/follow-list" element={<FollowList />} />
         </Route>
       </Route>
 

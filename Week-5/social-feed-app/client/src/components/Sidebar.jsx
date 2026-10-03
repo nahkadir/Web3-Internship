@@ -1,11 +1,18 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, UserRound, Feather, LogOut } from "lucide-react";
+import {
+  Home,
+  Search as SearchIcon,
+  User,
+  Feather,
+  LogOut,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import Avatar from "./Avatar";
 
 const navItems = [
   { to: "/dashboard", label: "Home", Icon: Home },
-  { to: "/profile", label: "Profile", Icon: UserRound },
+  { to: "/search", label: "Search", Icon: SearchIcon },
+  { to: "/profile", label: "Profile", Icon: User },
 ];
 
 export default function Sidebar() {
