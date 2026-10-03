@@ -20,10 +20,22 @@ const attachIsFollowingUsers = async (users, currentUserId) => {
   }));
 };
 
-export const getUserById = async (id) => {
-  const user = await User.findById(id);
+export const getMyFullProfile = async (userId) => {
+  const user = await User.findById(userId);
   if (!user) throw new ApiError(404, "User not found");
-  return user;
+
+  const [postCount, followersCount, followingCount] = await Promise.all([
+    Post.countDocuments({ author: userId }),
+    Follow.countDocuments({ following: userId }),
+    Follow.countDocuments({ follower: userId }),
+  ]);
+
+  return {
+    ...user.toJSON(),
+    postCount,
+    followersCount,
+    followingCount,
+  };
 };
 
 export const getPublicProfile = async (id, currentUserId) => {
