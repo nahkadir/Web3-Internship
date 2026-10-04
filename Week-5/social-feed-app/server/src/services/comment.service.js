@@ -1,6 +1,7 @@
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
 import { ApiError } from "../utils/ApiError.js";
+import { createNotification } from "./notification.service.js";
 
 export const createComment = async (postId, userId, { content }) => {
   const post = await Post.findById(postId);
@@ -11,8 +12,16 @@ export const createComment = async (postId, userId, { content }) => {
     author: userId,
     content,
   });
-
   await comment.populate("author", "name avatar");
+
+  await createNotification({
+    recipient: post.author,
+    actor: userId,
+    type: "COMMENT",
+    post: postId,
+    comment: comment._id,
+  });
+
   return comment;
 };
 

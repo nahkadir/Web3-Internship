@@ -35,10 +35,8 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Fetching "my notifications, newest first" is the main query pattern
 notificationSchema.index({ recipient: 1, createdAt: -1 });
 
-// Fast unread-count lookups for the badge
 notificationSchema.index({ recipient: 1, isRead: 1 });
 
 notificationSchema.set("toJSON", {

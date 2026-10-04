@@ -1,6 +1,7 @@
 import Like from "../models/Like.js";
 import Post from "../models/Post.js";
 import { ApiError } from "../utils/ApiError.js";
+import { createNotification } from "./notification.service.js";
 
 const getLikeStats = async (postId, userId) => {
   const [likeCount, likedByMe] = await Promise.all([
@@ -14,11 +15,21 @@ export const likePost = async (postId, userId) => {
   const post = await Post.findById(postId);
   if (!post) throw new ApiError(404, "Post not found");
 
+  let created = false;
   try {
     await Like.create({ post: postId, user: userId });
+    created = true;
   } catch (err) {
-    // 11000 = duplicate key -> user already liked this post, treat as a no-op
     if (err.code !== 11000) throw err;
+  }
+
+  if (created) {
+    await createNotification({
+      recipient: post.author,
+      actor: userId,
+      type: "LIKE",
+      post: postId,
+    });
   }
 
   return getLikeStats(postId, userId);

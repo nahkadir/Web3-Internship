@@ -1,6 +1,7 @@
 import Follow from "../models/Follow.js";
 import User from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
+import { createNotification } from "./notification.service.js";
 
 export const followUser = async (targetId, currentUserId) => {
   if (targetId.toString() === currentUserId.toString()) {
@@ -10,10 +11,20 @@ export const followUser = async (targetId, currentUserId) => {
   const target = await User.findById(targetId);
   if (!target) throw new ApiError(404, "User not found");
 
+  let created = false;
   try {
     await Follow.create({ follower: currentUserId, following: targetId });
+    created = true;
   } catch (err) {
-    if (err.code !== 11000) throw err; // already following -> no-op, same pattern as Like
+    if (err.code !== 11000) throw err;
+  }
+
+  if (created) {
+    await createNotification({
+      recipient: targetId,
+      actor: currentUserId,
+      type: "FOLLOW",
+    });
   }
 
   const followersCount = await Follow.countDocuments({ following: targetId });
