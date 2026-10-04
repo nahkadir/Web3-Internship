@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Search as SearchIcon } from "lucide-react";
 import UserRow from "../components/UserRow";
 import { searchUsers } from "../api/users";
+import { getFeed } from "../api/posts";
+import PostCard from "../components/PostCard";
 
 export default function Search() {
   const [query, setQuery] = useState("");
@@ -9,27 +11,37 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
+  const [tab, setTab] = useState("people"); // "people" | "posts"
+  const [postResults, setPostResults] = useState([]);
 
   useEffect(() => {
     if (!query.trim()) {
       setUsers([]);
+      setPostResults([]);
       setSearched(false);
       return;
     }
     const timeout = setTimeout(() => {
       setLoading(true);
       setError("");
-      searchUsers(query.trim())
-        .then((data) => setUsers(data.users))
+      const request =
+        tab === "people"
+          ? searchUsers(query.trim())
+          : getFeed(1, 10, query.trim());
+
+      request
+        .then((data) =>
+          tab === "people" ? setUsers(data.users) : setPostResults(data.posts),
+        )
         .catch((err) => setError(err.message))
         .finally(() => {
           setLoading(false);
           setSearched(true);
         });
-    }, 350); // debounce so we don't fire a request on every keystroke
+    }, 350);
 
     return () => clearTimeout(timeout);
-  }, [query]);
+  }, [query, tab]);
 
   return (
     <>
@@ -49,17 +61,33 @@ export default function Search() {
         </div>
       </div>
 
-      {loading && (
-        <p className="px-4 py-6 text-center text-secondary">Searching...</p>
-      )}
-      {error && <p className="px-4 py-6 text-center text-red-500">{error}</p>}
-      {!loading && searched && users.length === 0 && (
+      <div className="flex border-b border-hairline">
+        <button
+          onClick={() => setTab("people")}
+          className={`flex-1 py-3 text-sm font-bold ${tab === "people" ? "border-b-2 border-x-blue text-text" : "text-secondary"}`}
+        >
+          People
+        </button>
+        <button
+          onClick={() => setTab("posts")}
+          className={`flex-1 py-3 text-sm font-bold ${tab === "posts" ? "border-b-2 border-x-blue text-text" : "text-secondary"}`}
+        >
+          Posts
+        </button>
+      </div>
+
+      {!loading && searched && tab === "people" && users.length === 0 && (
         <p className="px-4 py-10 text-center text-secondary">No users found.</p>
       )}
+      {!loading && searched && tab === "posts" && postResults.length === 0 && (
+        <p className="px-4 py-10 text-center text-secondary">No posts found.</p>
+      )}
 
-      {users.map((u) => (
-        <UserRow key={u.id} user={u} />
-      ))}
+      {tab === "people" && users.map((u) => <UserRow key={u.id} user={u} />)}
+      {tab === "posts" &&
+        postResults.map((p) => (
+          <PostCard key={p.id} post={p} onEdit={() => {}} onDelete={() => {}} />
+        ))}
     </>
   );
 }

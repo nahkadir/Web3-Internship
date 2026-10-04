@@ -9,6 +9,7 @@ import Profile from "./pages/Profile";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
 import FollowList from "./pages/FollowList";
+import Notifications from "./pages/Notifications";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/users/:id" element={<UserProfile />} />
           <Route path="/users/:id/follow-list" element={<FollowList />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Route>
       </Route>
 

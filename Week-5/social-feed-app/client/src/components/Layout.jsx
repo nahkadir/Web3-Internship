@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import RightSidebar from "./RightSidebar";
 
 export default function Layout() {
   return (
@@ -8,6 +9,7 @@ export default function Layout() {
       <div className="w-full max-w-[600px] border-x border-hairline">
         <Outlet />
       </div>
+      <RightSidebar />
     </div>
   );
 }

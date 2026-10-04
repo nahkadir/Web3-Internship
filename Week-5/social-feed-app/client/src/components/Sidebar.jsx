@@ -1,16 +1,26 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Search as SearchIcon, User, Feather } from "lucide-react";
+import {
+  Home,
+  Search as SearchIcon,
+  Bell,
+  User,
+  Feather,
+  LogOut,
+} from "lucide-react";
+import { useNotifications } from "../context/NotificationsContext";
 import { useAuth } from "../context/AuthContext";
 import Avatar from "./Avatar";
 
 const navItems = [
   { to: "/dashboard", label: "Home", Icon: Home },
   { to: "/search", label: "Search", Icon: SearchIcon },
+  { to: "/notifications", label: "Notifications", Icon: Bell, badge: true },
   { to: "/profile", label: "Profile", Icon: User },
 ];
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -25,7 +35,7 @@ export default function Sidebar() {
         </div>
 
         <nav className="flex flex-col items-start gap-1">
-          {navItems.map(({ to, label, Icon }) => (
+          {navItems.map(({ to, label, Icon, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -35,7 +45,14 @@ export default function Sidebar() {
                 }`
               }
             >
-              <Icon size={26} strokeWidth={2} />
+              <span className="relative">
+                <Icon size={26} strokeWidth={2} />
+                {badge && unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-x-blue px-1 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
               <span className="hidden xl:inline text-[19px]">{label}</span>
             </NavLink>
           ))}

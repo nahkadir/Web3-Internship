@@ -4,6 +4,7 @@ import Avatar from "./Avatar";
 import CommentSection from "./CommentSection";
 import { useAuth } from "../context/AuthContext";
 import { likePost, unlikePost } from "../api/posts";
+import { Link } from "react-router-dom";
 
 const formatTime = (iso) => {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -59,17 +60,24 @@ export default function PostCard({ post, onEdit, onDelete }) {
   return (
     <article className="border-b border-hairline px-4 py-3 hover:bg-hover">
       <div className="flex gap-3">
-        <Avatar
-          src={post.author.avatar}
-          name={post.author.name}
-          size="h-10 w-10"
-          textSize="text-base"
-        />
+        <Link to={`/users/${post.author.id}`}>
+          <Avatar
+            src={post.author.avatar}
+            name={post.author.name}
+            size="h-10 w-10"
+            textSize="text-base"
+          />
+        </Link>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between">
             <div className="flex flex-wrap items-baseline gap-1 text-[15px]">
-              <span className="font-bold text-text">{post.author.name}</span>
+              <Link
+                to={`/users/${post.author.id}`}
+                className="font-bold text-text hover:underline"
+              >
+                {post.author.name}
+              </Link>
               <span className="text-secondary">
                 · {formatTime(post.createdAt)}
               </span>

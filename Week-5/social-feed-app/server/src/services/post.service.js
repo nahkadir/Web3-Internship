@@ -20,18 +20,25 @@ export const createPost = async (authorId, { content, imageUrl }) => {
 // If it needs to display the author's name and avatar beside the post,
 // it would need to make another API request to fetch that information.
 
-export const getFeed = async ({ page = 1, limit = 10 }, currentUserId) => {
+export const getFeed = async (
+  { page = 1, limit = 10, search },
+  currentUserId,
+) => {
   const pageNum = Math.max(1, Number(page) || 1);
   const limitNum = Math.min(50, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * limitNum;
 
+  const filter = search?.trim()
+    ? { content: { $regex: search.trim(), $options: "i" } }
+    : {};
+
   const [posts, total] = await Promise.all([
-    Post.find()
+    Post.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
       .populate("author", "name avatar"),
-    Post.countDocuments(),
+    Post.countDocuments(filter),
   ]);
 
   const enriched = await enrichPosts(posts, currentUserId);
