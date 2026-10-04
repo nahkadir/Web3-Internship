@@ -5,6 +5,7 @@ import PostCard from "../components/PostCard";
 import { useAuth } from "../context/AuthContext";
 import { getMyProfile, updateMyProfile } from "../api/users";
 import { getFeed } from "../api/posts";
+import { getPostsByAuthor } from "../api/posts";
 
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("en-US", {
@@ -26,15 +27,12 @@ export default function Profile() {
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const loadProfile = () =>
-    Promise.all([getMyProfile(), getFeed(1, 50)]).then(
-      ([profileData, feedData]) => {
-        setProfile(profileData.user);
-        setPosts(
-          feedData.posts.filter((p) => p.author.id === profileData.user.id),
-        );
-      },
-    );
+  const loadProfile = async () => {
+    const { user } = await getMyProfile();
+    const { posts: myPosts } = await getPostsByAuthor(user.id);
+    setProfile(user);
+    setPosts(myPosts);
+  };
 
   useEffect(() => {
     loadProfile()

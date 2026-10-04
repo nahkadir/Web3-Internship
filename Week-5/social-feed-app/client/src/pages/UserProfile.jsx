@@ -6,6 +6,7 @@ import PostCard from "../components/PostCard";
 import { useAuth } from "../context/AuthContext";
 import { getPublicProfile } from "../api/users";
 import { getFeed } from "../api/posts";
+import { getPostsByAuthor } from "../api/posts";
 
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long" });
@@ -21,10 +22,10 @@ export default function UserProfile() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([getPublicProfile(id), getFeed(1, 50)])
-      .then(([profileData, feedData]) => {
+    Promise.all([getPublicProfile(id), getPostsByAuthor(id)])
+      .then(([profileData, postsData]) => {
         setProfile(profileData.user);
-        setPosts(feedData.posts.filter((p) => p.author.id === id));
+        setPosts(postsData.posts);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

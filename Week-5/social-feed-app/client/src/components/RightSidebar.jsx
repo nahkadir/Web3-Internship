@@ -30,9 +30,9 @@ export default function RightSidebar() {
   };
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[290px] shrink-0 flex-col gap-4 py-2 pl-4 xl:flex">
+    <aside className="sticky top-0 hidden h-screen w-[350px] shrink-0 flex-col gap-4 py-2 pl-4 xl:flex">
       <form onSubmit={handleSearchSubmit}>
-        <div className="flex items-center gap-2 rounded-full bg-hover px-4 py-2.5">
+        <div className="flex items-center gap-2 rounded-full border border-hairline bg-bg px-4 py-2.5">
           <SearchIcon size={18} className="text-secondary" />
           <input
             value={query}

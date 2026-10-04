@@ -7,9 +7,9 @@ export const createPost = asyncHandler(async (req, res) => {
 });
 
 export const getFeed = asyncHandler(async (req, res) => {
-  const { page, limit, search } = req.query;
+  const { page, limit, search, author } = req.query;
   const { posts, pagination } = await postService.getFeed(
-    { page, limit, search },
+    { page, limit, search, author },
     req.user?._id,
   );
   res.status(200).json({ posts, pagination });

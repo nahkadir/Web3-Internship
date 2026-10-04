@@ -12,3 +12,5 @@ export const deletePost = (id) => api(`/posts/${id}`, { method: "DELETE" });
 export const likePost = (id) => api(`/posts/${id}/like`, { method: "POST" });
 export const unlikePost = (id) =>
   api(`/posts/${id}/like`, { method: "DELETE" });
+export const getPostsByAuthor = (authorId, page = 1) =>
+  api(`/posts?author=${authorId}&page=${page}&limit=50`);

@@ -70,8 +70,8 @@ export default function PostCard({ post, onEdit, onDelete }) {
         </Link>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between">
-            <div className="flex flex-wrap items-baseline gap-1 text-[15px]">
+          <div className="relative">
+            <div className="flex flex-wrap items-baseline gap-1 pr-8 text-[15px] leading-tight">
               <Link
                 to={`/users/${post.author.id}`}
                 className="font-bold text-text hover:underline"
@@ -84,7 +84,7 @@ export default function PostCard({ post, onEdit, onDelete }) {
             </div>
 
             {isOwner && (
-              <div className="relative">
+              <div className="absolute right-0 top-0">
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
                   className="grid h-8 w-8 place-items-center rounded-full text-secondary hover:bg-x-blue/10 hover:text-x-blue"
@@ -124,7 +124,7 @@ export default function PostCard({ post, onEdit, onDelete }) {
             )}
           </div>
 
-          <p className="mt-0.5 whitespace-pre-wrap text-[15px] text-text">
+          <p className="whitespace-pre-wrap mt-1 text-[15px] text-text leading-snug">
             {post.content}
           </p>
 
@@ -137,8 +137,7 @@ export default function PostCard({ post, onEdit, onDelete }) {
             />
           )}
 
-          {/* Action bar — X-style: circular tinted hover + count lights up in the same color */}
-          <div className="mt-3 flex max-w-xs items-center gap-8">
+          <div className="mt-1 flex max-w-xs items-center gap-8">
             <button
               onClick={() => setShowComments((v) => !v)}
               className="group flex items-center gap-1"

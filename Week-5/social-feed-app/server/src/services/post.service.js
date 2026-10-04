@@ -21,16 +21,16 @@ export const createPost = async (authorId, { content, imageUrl }) => {
 // it would need to make another API request to fetch that information.
 
 export const getFeed = async (
-  { page = 1, limit = 10, search },
+  { page = 1, limit = 10, search, author },
   currentUserId,
 ) => {
   const pageNum = Math.max(1, Number(page) || 1);
   const limitNum = Math.min(50, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * limitNum;
 
-  const filter = search?.trim()
-    ? { content: { $regex: search.trim(), $options: "i" } }
-    : {};
+  const filter = {};
+  if (search?.trim()) filter.content = { $regex: search.trim(), $options: "i" };
+  if (author) filter.author = author;
 
   const [posts, total] = await Promise.all([
     Post.find(filter)

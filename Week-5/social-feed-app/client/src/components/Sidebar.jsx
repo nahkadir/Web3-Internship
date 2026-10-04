@@ -28,7 +28,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[68px] flex-col justify-between py-2 xl:w-[275px]">
+    <aside className="sticky top-0 hidden h-screen w-[68px] flex-col justify-between py-2 md:flex xl:w-[275px]">
       <div>
         <div className="mb-2 grid h-12 w-12 place-items-center text-4xl font-bold select-none">
           𝕐
@@ -69,7 +69,7 @@ export default function Sidebar() {
 
       <button
         onClick={handleLogout}
-        className="flex items-center gap-3 rounded-full p-2 text-left hover:bg-hover"
+        className="mx-2 flex items-center gap-3 rounded-full p-2 text-left hover:bg-hover cursor-pointer"
       >
         <Avatar
           src={user?.avatar}
