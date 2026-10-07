@@ -17,11 +17,12 @@ export default function Navbar() {
     <header className="border-b border-cloud-veil bg-paper-white">
       <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-3 items-center px-4">
         <nav className="flex gap-6 text-[14px] text-graphite">
+          <Link to="/products">Shop</Link>
           {user && <Link to={DASHBOARD_PATH[user.role]}>Dashboard</Link>}
         </nav>
 
         <Link
-          to="/"
+          to="/products"
           className="justify-self-center text-[20px] font-black text-graphite"
         >
           {BRAND_NAME}
@@ -33,7 +34,12 @@ export default function Navbar() {
               <span className="hidden text-slate-gray sm:inline">
                 {user.name}
               </span>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+              >
                 Log out
               </Button>
             </>

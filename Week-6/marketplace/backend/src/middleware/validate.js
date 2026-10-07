@@ -15,6 +15,8 @@ export const validate = (schema) => (req, res, next) => {
     return next(new AppError("Validation failed", 400, details));
   }
 
-  req.body = result.data.body ?? req.body;
+  const { body, query, params } = result.data;
+  if (body !== undefined) req.body = body;
+  req.validated = { query: query ?? {}, params: params ?? {} };
   next();
 };

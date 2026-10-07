@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed": "node src/scripts/seed.js"
+    "seed": "node src/scripts/seed.js",
+    "seed:marketplace": "node src/scripts/seedMarketplace.js"
   },
   "type": "module",
   "keywords": [],

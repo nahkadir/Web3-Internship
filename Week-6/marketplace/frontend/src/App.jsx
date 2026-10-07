@@ -2,32 +2,34 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
-import { ROLES, DASHBOARD_PATH } from "./constants/roles";
-import { useAuth } from "./context/AuthContext";
+import { ROLES } from "./constants/roles";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
+import VendorStore from "./pages/VendorStore";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import VendorDashboard from "./pages/VendorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-
-function HomeRedirect() {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  return <Navigate to={user ? DASHBOARD_PATH[user.role] : "/login"} replace />;
-}
 
 export default function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<HomeRedirect />} />
+        <Route path="/" element={<Navigate to="/products" replace />} />
+
+        {/* public marketplace */}
+        <Route path="/products" element={<Products />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
+        <Route path="/vendor/:id" element={<VendorStore />} />
 
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
 
+        {/* /vendor/dashboard is a static path, so it wins over /vendor/:id */}
         <Route element={<ProtectedRoute roles={[ROLES.CUSTOMER]} />}>
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />
         </Route>

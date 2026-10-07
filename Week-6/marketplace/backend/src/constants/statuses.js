@@ -1,0 +1,13 @@
+export const VENDOR_STATUS = Object.freeze({
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  SUSPENDED: "SUSPENDED",
+  REJECTED: "REJECTED",
+});
+
+export const PRODUCT_STATUS = Object.freeze({
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  OUT_OF_STOCK: "OUT_OF_STOCK",
+  ARCHIVED: "ARCHIVED",
+});
