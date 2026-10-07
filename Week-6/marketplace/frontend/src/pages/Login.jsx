@@ -50,7 +50,10 @@ export default function Login() {
         email: form.email.trim(),
         password: form.password,
       });
-      navigate(DASHBOARD_PATH[user.role], { replace: true });
+      const from = location.state?.from?.pathname;
+      navigate(from && from !== "/login" ? from : DASHBOARD_PATH[user.role], {
+        replace: true,
+      });
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.errors.length) {

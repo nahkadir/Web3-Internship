@@ -12,6 +12,11 @@ import VendorStore from "./pages/VendorStore";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import VendorDashboard from "./pages/VendorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
+import VendorOrders from "./pages/VendorOrder";
 
 export default function App() {
   return (
@@ -29,12 +34,21 @@ export default function App() {
           <Route path="/register" element={<Register />} />
         </Route>
 
-        {/* /vendor/dashboard is a static path, so it wins over /vendor/:id */}
+        {/* any logged-in user can shop */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/orders/:id" element={<OrderDetails />} />
+        </Route>
+
+        {/* static paths like /vendor/dashboard and /vendor/orders win over /vendor/:id */}
         <Route element={<ProtectedRoute roles={[ROLES.CUSTOMER]} />}>
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />
         </Route>
         <Route element={<ProtectedRoute roles={[ROLES.VENDOR]} />}>
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+          <Route path="/vendor/orders" element={<VendorOrders />} />
         </Route>
         <Route element={<ProtectedRoute roles={[ROLES.ADMIN]} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />

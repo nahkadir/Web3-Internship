@@ -1,19 +1,30 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApi } from "../hooks/useApi";
-import { formatPrice } from "../lib/utils";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import { describeError, formatPrice } from "../lib/utils";
 import ProductImage from "../components/ProductImage";
+import QuantityStepper from "../components/QuantityStepper";
 import Button from "../components/Button";
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const { user } = useAuth();
+  const { addItem } = useCart();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { data, loading, error } = useApi(`/products/${id}`);
+
   const [active, setActive] = useState(0);
-  const [notice, setNotice] = useState("");
+  const [qty, setQty] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     setActive(0);
-    setNotice("");
+    setQty(1);
+    setMessage(null);
   }, [id]);
 
   if (loading && !data) {
@@ -43,6 +54,23 @@ export default function ProductDetails() {
 
   const p = data.product;
   const images = p.images ?? [];
+
+  const handleAdd = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: location } });
+      return;
+    }
+    setAdding(true);
+    setMessage(null);
+    try {
+      await addItem(p.id, qty);
+      setMessage({ type: "ok", text: "Added to your cart." });
+    } catch (err) {
+      setMessage({ type: "error", text: describeError(err) });
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-10">
@@ -116,15 +144,35 @@ export default function ProductDetails() {
             {p.description}
           </p>
 
-          <Button
-            type="button"
-            className="mt-8 w-full sm:w-auto sm:min-w-56"
-            onClick={() => setNotice("The shopping cart arrives on Day 3.")}
-          >
-            Add to cart
-          </Button>
-          {notice && (
-            <p className="mt-3 text-[13px] text-slate-gray">{notice}</p>
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <QuantityStepper
+              value={qty}
+              onChange={setQty}
+              max={Math.min(p.stock, 100)}
+              disabled={adding}
+            />
+            <Button
+              type="button"
+              className="min-w-48 flex-1 sm:flex-none"
+              loading={adding}
+              onClick={handleAdd}
+            >
+              Add to cart
+            </Button>
+          </div>
+
+          {message && (
+            <p
+              role={message.type === "error" ? "alert" : "status"}
+              className={`mt-4 text-[13px] ${message.type === "error" ? "text-red-700" : "text-midcurrent-navy"}`}
+            >
+              {message.text}{" "}
+              {message.type === "ok" && (
+                <Link to="/cart" className="font-medium underline">
+                  View cart
+                </Link>
+              )}
+            </p>
           )}
 
           <Link
