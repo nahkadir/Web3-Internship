@@ -34,8 +34,10 @@ router.use("/checkout", checkoutRoutes);
 router.use("/orders", orderRoutes);
 router.use("/payments", paymentRoutes);
 
-// the fake provider only exists in development
-if (env.payment.provider === "mock" && env.nodeEnv !== "production") {
+if (
+  env.payment.provider === "mock" &&
+  (env.nodeEnv !== "production" || env.payment.allowMock)
+) {
   router.use("/mock-gateway", mockGatewayRoutes);
 }
 

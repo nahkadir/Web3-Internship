@@ -32,5 +32,6 @@ export const env = {
     currency: process.env.PAYMENT_CURRENCY || "PKR",
     commissionRate,
     windowMinutes: Number(process.env.PAYMENT_WINDOW_MINUTES ?? 30),
+    allowMock: process.env.ALLOW_MOCK_PAYMENTS === "true",
   },
 };

@@ -11,7 +11,11 @@ export const getProvider = () => {
       `Unsupported payment provider: ${env.payment.provider}`,
       500,
     );
-  if (provider.name === "mock" && env.nodeEnv === "production") {
+  if (
+    provider.name === "mock" &&
+    env.nodeEnv === "production" &&
+    !env.payment.allowMock
+  ) {
     throw new AppError(
       "The mock payment provider cannot be used in production",
       500,

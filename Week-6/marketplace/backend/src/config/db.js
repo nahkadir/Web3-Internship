@@ -1,7 +1,17 @@
 import mongoose from "mongoose";
 import { env } from "./env.js";
 
-export const connectDB = async () => {
-  await mongoose.connect(env.databaseUrl);
-  console.log("MongoDB connected");
+let connection = null;
+
+export const connectDB = () => {
+  if (!connection) {
+    connection = mongoose
+      .connect(env.databaseUrl)
+      .then(() => console.log("MongoDB connected"))
+      .catch((err) => {
+        connection = null;
+        throw err;
+      });
+  }
+  return connection;
 };
