@@ -28,7 +28,7 @@ export const serializeItem = (i) => ({
 });
 
 // items must be lean and have vendorId populated ("storeName")
-const groupByVendor = (items) => {
+export const groupByVendor = (items) => {
   const map = new Map();
   for (const it of items) {
     const key = String(it.vendorId._id);

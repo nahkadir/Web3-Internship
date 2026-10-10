@@ -25,10 +25,7 @@ export default function Checkout() {
     setProblems([]);
     try {
       const data = await api("/checkout", { method: "POST" }); // the server rebuilds everything from the DB
-      navigate(`/orders/${data.order.id}`, {
-        replace: true,
-        state: { placed: true },
-      });
+      navigate(`/orders/${data.order.id}/payment`, { replace: true });
       refresh();
     } catch (err) {
       setError(err.message || "Could not place your order");
@@ -139,9 +136,10 @@ export default function Checkout() {
             <div className="mt-3 flex items-start gap-3 rounded-[20px] border border-midcurrent-navy p-4">
               <span className="mt-1 h-3 w-3 shrink-0 rounded-full bg-midcurrent-navy" />
               <div>
-                <p className="text-[14px] font-medium">Cash on Delivery</p>
+                <p className="text-[14px] font-medium">Online payment</p>
                 <p className="text-[13px] text-slate-gray">
-                  Pay when your order arrives. Online payment is coming soon.
+                  After placing your order you'll pay on our secure payment
+                  page. Your order is confirmed once the payment is verified.
                 </p>
               </div>
             </div>
@@ -170,7 +168,7 @@ export default function Checkout() {
             disabled={cart.hasIssues}
             onClick={placeOrder}
           >
-            Place order
+            Place order and continue to payment
           </Button>
           <Link
             to="/cart"

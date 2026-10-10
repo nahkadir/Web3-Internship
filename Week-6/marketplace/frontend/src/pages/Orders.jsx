@@ -54,36 +54,55 @@ export default function Orders() {
           <ul
             className={`mt-8 flex flex-col gap-2 ${loading ? "opacity-60" : ""}`}
           >
-            {data.orders.map((o) => (
-              <li key={o.id}>
-                <Link
-                  to={`/orders/${o.id}`}
-                  className="flex flex-wrap items-center gap-4 bg-paper-white p-4 hover:bg-white/60"
-                >
-                  <div className="flex w-[180px] shrink-0 gap-1">
-                    {o.previewImages.map((src) => (
-                      <ProductImage
-                        key={src}
-                        src={src}
-                        alt=""
-                        className="h-14 w-14"
-                      />
-                    ))}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[16px] font-bold">{o.orderNumber}</p>
-                    <p className="text-[13px] text-slate-gray">
-                      {formatDate(o.createdAt)} · {o.itemCount} item
-                      {o.itemCount === 1 ? "" : "s"}
+            {data.orders.map((o) => {
+              const needsPayment =
+                o.status === "PENDING" &&
+                ["UNPAID", "PENDING", "FAILED", "CANCELLED"].includes(
+                  o.paymentStatus,
+                );
+              return (
+                <li key={o.id}>
+                  <Link
+                    to={
+                      needsPayment
+                        ? `/orders/${o.id}/payment`
+                        : `/orders/${o.id}`
+                    }
+                    className="flex flex-wrap items-center gap-4 bg-paper-white p-4 hover:bg-white/60"
+                  >
+                    <div className="flex w-[180px] shrink-0 gap-1">
+                      {o.previewImages.map((src) => (
+                        <ProductImage
+                          key={src}
+                          src={src}
+                          alt=""
+                          className="h-14 w-14"
+                        />
+                      ))}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[16px] font-bold">{o.orderNumber}</p>
+                      <p className="text-[13px] text-slate-gray">
+                        {formatDate(o.createdAt)} · {o.itemCount} item
+                        {o.itemCount === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <StatusBadge status={o.status} />
+                      <StatusBadge status={o.paymentStatus} />
+                    </div>
+                    <p className="w-28 text-right text-[16px] font-bold">
+                      {formatPrice(o.totalAmount)}
                     </p>
-                  </div>
-                  <StatusBadge status={o.status} />
-                  <p className="w-28 text-right text-[16px] font-bold">
-                    {formatPrice(o.totalAmount)}
-                  </p>
-                </Link>
-              </li>
-            ))}
+                    {needsPayment && (
+                      <span className="text-[13px] font-medium underline">
+                        Pay now
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
           <Pagination pagination={data.pagination} onPage={setPage} />
         </>

@@ -41,3 +41,19 @@ export const describeError = (err) =>
   err?.errors?.length
     ? err.errors.map((e) => e.message).join(" · ")
     : err?.message || "Something went wrong";
+
+export const formatDateTime = (iso) =>
+  new Date(iso).toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+export const pillClass = (active) =>
+  `cursor-pointer rounded-[30px] border px-4 py-2 text-[13px] font-medium ${
+    active
+      ? "border-midcurrent-navy bg-midcurrent-navy text-paper-white"
+      : "border-cloud-veil bg-paper-white text-midcurrent-navy hover:border-soft-stone"
+  }`;

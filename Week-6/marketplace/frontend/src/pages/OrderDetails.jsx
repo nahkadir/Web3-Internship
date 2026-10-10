@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useApi } from "../hooks/useApi";
 import { formatDate, formatPrice } from "../lib/utils";
 import ProductImage from "../components/ProductImage";
@@ -7,7 +7,6 @@ import TotalsBlock from "../components/TotalsBlock";
 
 export default function OrderDetails() {
   const { id } = useParams();
-  const location = useLocation();
   const { data, loading, error } = useApi(`/orders/${id}`);
 
   if (loading && !data) {
@@ -30,6 +29,9 @@ export default function OrderDetails() {
   }
 
   const o = data.order;
+  const needsPayment =
+    o.status === "PENDING" &&
+    ["UNPAID", "PENDING", "FAILED", "CANCELLED"].includes(o.paymentStatus);
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-10">
@@ -41,28 +43,33 @@ export default function OrderDetails() {
         <span className="text-midcurrent-navy">{o.orderNumber}</span>
       </nav>
 
-      {location.state?.placed && (
+      {needsPayment && (
         <div
           role="status"
-          className="mt-4 border-l-4 border-midcurrent-navy bg-paper-white p-4"
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 border-l-4 border-midcurrent-navy bg-paper-white p-4"
         >
-          <p className="text-[16px] font-bold">
-            Thank you, your order has been placed.
-          </p>
-          <p className="mt-1 text-[14px] text-slate-gray">
-            Each store will confirm and ship its part of your order. You can
-            follow the progress here.
-          </p>
+          <div>
+            <p className="text-[16px] font-bold">Payment required</p>
+            <p className="mt-1 text-[14px] text-slate-gray">
+              Your order is reserved but not confirmed until it is paid.
+            </p>
+          </div>
+          <Link
+            to={`/orders/${id}/payment`}
+            className="rounded-[30px] bg-midcurrent-navy px-6 py-3 text-[15px] font-medium text-paper-white"
+          >
+            Pay now
+          </Link>
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-4">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <h1 className="text-[38px] font-bold leading-[1.1]">{o.orderNumber}</h1>
         <StatusBadge status={o.status} />
+        <StatusBadge status={o.paymentStatus} />
       </div>
       <p className="mt-2 text-[14px] text-slate-gray">
-        Placed on {formatDate(o.createdAt)} · Payment:{" "}
-        {o.paymentMethod === "COD" ? "Cash on Delivery" : o.paymentMethod}
+        Placed on {formatDate(o.createdAt)} · Online payment
       </p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">

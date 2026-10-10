@@ -16,7 +16,9 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails";
-import VendorOrders from "./pages/VendorOrder";
+import OrderPayment from "./pages/OrderPayment";
+import MockCheckout from "./pages/MockCheckout";
+import VendorOrders from "./pages/VendorOrders";
 
 export default function App() {
   return (
@@ -29,6 +31,9 @@ export default function App() {
         <Route path="/products/:id" element={<ProductDetails />} />
         <Route path="/vendor/:id" element={<VendorStore />} />
 
+        {/* stands in for the payment provider's own hosted page (development only) */}
+        <Route path="/pay/mock/:txnId" element={<MockCheckout />} />
+
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -40,9 +45,9 @@ export default function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/orders/:id" element={<OrderDetails />} />
+          <Route path="/orders/:id/payment" element={<OrderPayment />} />
         </Route>
 
-        {/* static paths like /vendor/dashboard and /vendor/orders win over /vendor/:id */}
         <Route element={<ProtectedRoute roles={[ROLES.CUSTOMER]} />}>
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />
         </Route>

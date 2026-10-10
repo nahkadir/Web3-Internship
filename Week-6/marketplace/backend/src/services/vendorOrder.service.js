@@ -1,7 +1,6 @@
 import { Order } from "../models/Order.js";
 import { OrderItem } from "../models/OrderItem.js";
-import { Product } from "../models/Product.js";
-import { ORDER_STATUS, PRODUCT_STATUS } from "../constants/statuses.js";
+import { PAYMENT_STATUS } from "../constants/statuses.js";
 import { AppError } from "../utils/AppError.js";
 import { buildPagination } from "../utils/pagination.js";
 import { round2 } from "./pricing.service.js";
@@ -11,13 +10,17 @@ import {
   ITEM_TRANSITIONS,
   TERMINAL,
 } from "./orderStatus.js";
+import { setItemStatus, syncOrderStatus } from "./fulfillment.service.js";
 
-// a vendor's "order segment": only THEIR items from an order, never other vendors' data
+const VISIBLE = [PAYMENT_STATUS.PAID, PAYMENT_STATUS.REFUNDED];
+
+// a vendor's "order segment": only THEIR items, never other vendors' data
 const toSegment = (order, items) => ({
   orderId: order.id,
   orderNumber: order.orderNumber,
   customer: { name: order.userId?.name ?? "Customer" },
   createdAt: order.createdAt,
+  paymentStatus: order.paymentStatus,
   status: deriveOrderStatus(items.map((i) => i.status)),
   subtotal: round2(items.reduce((sum, i) => sum + i.subtotal, 0)),
   items: items.map(serializeItem),
@@ -33,6 +36,16 @@ export const listVendorOrders = async (vendor, { page, limit }) => {
         createdAt: { $max: "$createdAt" },
       },
     },
+    {
+      $lookup: {
+        from: Order.collection.name,
+        localField: "_id",
+        foreignField: "_id",
+        as: "order",
+      },
+    },
+    { $match: { "order.paymentStatus": { $in: VISIBLE } } }, // unpaid orders are invisible to vendors
+    { $project: { order: 0 } },
     { $sort: { createdAt: -1, _id: -1 } },
     {
       $facet: {
@@ -62,28 +75,23 @@ export const getVendorOrder = async (vendor, orderId) => {
   if (!items.length) throw new AppError("Order not found", 404); // also hides other vendors' orders
 
   const order = await Order.findById(orderId).populate("userId", "name");
+  if (!order || !VISIBLE.includes(order.paymentStatus))
+    throw new AppError("Order not found", 404);
+
   return toSegment(order, items);
 };
 
-const syncOrderStatus = async (orderId) => {
-  const rows = await OrderItem.find({ orderId }).select("status").lean();
-  await Order.updateOne(
-    { _id: orderId },
-    { status: deriveOrderStatus(rows.map((r) => r.status)) },
-  );
-};
-
-const restockProduct = async (productId, quantity) => {
-  await Product.updateOne({ _id: productId }, { $inc: { stock: quantity } });
-  await Product.updateOne(
-    { _id: productId, status: PRODUCT_STATUS.OUT_OF_STOCK, stock: { $gt: 0 } },
-    { status: PRODUCT_STATUS.ACTIVE },
-  );
-};
-
 export const updateSegmentStatus = async (vendor, orderId, status) => {
-  const items = await OrderItem.find({ orderId, vendorId: vendor._id }); // only this vendor's items
+  const items = await OrderItem.find({ orderId, vendorId: vendor._id });
   if (!items.length) throw new AppError("Order not found", 404);
+
+  const order = await Order.findById(orderId);
+  if (!order || order.paymentStatus !== PAYMENT_STATUS.PAID) {
+    throw new AppError(
+      "Orders can only be fulfilled after payment is confirmed",
+      409,
+    );
+  }
 
   const movable = items.filter((i) => !TERMINAL.includes(i.status));
   if (!movable.length)
@@ -98,18 +106,8 @@ export const updateSegmentStatus = async (vendor, orderId, status) => {
       400,
     );
 
-  for (const item of movable) {
-    // the status in the filter makes a repeated/concurrent request harmless
-    const updated = await OrderItem.findOneAndUpdate(
-      { _id: item._id, status: item.status },
-      { status },
-      { new: true },
-    );
-    if (updated && status === ORDER_STATUS.CANCELLED) {
-      await restockProduct(updated.productId, updated.quantity);
-    }
-  }
+  for (const item of movable) await setItemStatus(item, status);
 
-  await syncOrderStatus(orderId); // keeps the customer's order status consistent
+  await syncOrderStatus(orderId);
   return getVendorOrder(vendor, orderId);
 };

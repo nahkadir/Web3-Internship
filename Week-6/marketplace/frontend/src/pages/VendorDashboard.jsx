@@ -10,6 +10,7 @@ import ProductForm from "../components/ProductForm";
 import VendorApplyForm from "../components/VendorApplyForm";
 import Pagination from "../components/Pagination";
 import Button from "../components/Button";
+import VendorEarnings from "../components/VendorEarnings";
 
 const NOTICES = {
   PENDING: {
@@ -192,6 +193,8 @@ export default function VendorDashboard() {
           </div>
         ))}
       </div>
+
+      <VendorEarnings />
 
       <div className="mt-10">
         {view ? (

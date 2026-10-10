@@ -20,3 +20,19 @@ export const ORDER_STATUS = Object.freeze({
   DELIVERED: "DELIVERED",
   CANCELLED: "CANCELLED",
 });
+
+export const PAYMENT_STATUS = Object.freeze({
+  PENDING: "PENDING",
+  PROCESSING: "PROCESSING",
+  PAID: "PAID",
+  FAILED: "FAILED",
+  REFUNDED: "REFUNDED",
+  CANCELLED: "CANCELLED",
+});
+
+export const COMMISSION_STATUS = Object.freeze({
+  PENDING: "PENDING",
+  PAID: "PAID",
+  CANCELLED: "CANCELLED",
+  REFUNDED: "REFUNDED",
+});

@@ -19,3 +19,6 @@ export const calculateTotals = (lines) => {
   );
   return { subtotal, shippingAmount, discountAmount, taxAmount, totalAmount };
 };
+
+// payment providers work in integer minor units (paisa), never floats
+export const toMinorUnits = (amount) => Math.round(amount * 100);
