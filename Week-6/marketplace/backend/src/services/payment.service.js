@@ -5,6 +5,10 @@ import { WebhookEvent } from "../models/WebhookEvent.js";
 import { getProvider } from "../payments/index.js";
 import { env } from "../config/env.js";
 import { ORDER_STATUS, PAYMENT_STATUS } from "../constants/statuses.js";
+import {
+  PAYMENT_TRANSITIONS,
+  statusesThatCanMoveTo,
+} from "../constants/lifecycle.js";
 import { AppError } from "../utils/AppError.js";
 import { paymentLog } from "../utils/paymentLog.js";
 import { calculateTotals, toMinorUnits } from "./pricing.service.js";
@@ -14,6 +18,7 @@ import {
   isOrderExpired,
   paymentDeadline,
 } from "./orderLifecycle.service.js";
+import { audit } from "./audit.service.js";
 
 const { PENDING, PROCESSING, PAID, FAILED, CANCELLED, REFUNDED } =
   PAYMENT_STATUS;
@@ -48,7 +53,10 @@ const orderSummary = (o) => ({
 
 const markPaid = async (payment) => {
   const claimed = await Payment.findOneAndUpdate(
-    { _id: payment._id, status: { $in: OPEN } },
+    {
+      _id: payment._id,
+      status: { $in: statusesThatCanMoveTo(PAYMENT_TRANSITIONS, PAID) },
+    },
     {
       $set: { status: PAID, active: true, paidAt: new Date() },
       $unset: { failureReason: "" },
@@ -61,6 +69,12 @@ const markPaid = async (payment) => {
     paymentId: claimed.id,
     orderId: String(claimed.orderId),
     transactionId: claimed.transactionId,
+  });
+  await audit({
+    action: "payment.paid",
+    entityType: "Payment",
+    entityId: claimed._id,
+    meta: { orderId: String(claimed.orderId), amount: claimed.amount },
   });
 
   await Order.updateOne({ _id: claimed.orderId }, { paymentStatus: PAID });
@@ -91,7 +105,10 @@ const markPaid = async (payment) => {
 
 const markEnded = async (payment, status, reason) => {
   const claimed = await Payment.findOneAndUpdate(
-    { _id: payment._id, status: { $in: OPEN } },
+    {
+      _id: payment._id,
+      status: { $in: statusesThatCanMoveTo(PAYMENT_TRANSITIONS, status) },
+    },
     {
       status,
       active: false,
@@ -100,6 +117,13 @@ const markEnded = async (payment, status, reason) => {
     { new: true },
   );
   if (!claimed) return Payment.findById(payment._id);
+
+  await audit({
+    action: `payment.${status.toLowerCase()}`,
+    entityType: "Payment",
+    entityId: claimed._id,
+    meta: { orderId: String(claimed.orderId), reason: reason || null },
+  });
 
   // a failed/cancelled payment never confirms the order; it stays PENDING so the customer can retry
   await Order.updateOne(
@@ -162,7 +186,7 @@ export const applyProviderResult = async (payment, tx) => {
   }
 };
 
-/* ---------- Task 3: create payment ---------- */
+/* ---------- create payment ---------- */
 
 export const createPayment = async (user, orderId) => {
   const provider = getProvider();
@@ -279,7 +303,7 @@ export const createPayment = async (user, orderId) => {
   }
 };
 
-/* ---------- Task 4: verify (asks the provider, never trusts the browser) ---------- */
+/* ---------- verify (asks the provider, never trusts the browser) ---------- */
 
 export const verifyPayment = async (user, orderId) => {
   const order = await Order.findOne({ _id: orderId, userId: user._id });
@@ -302,7 +326,7 @@ export const verifyPayment = async (user, orderId) => {
   return { payment: toClientPayment(payment), order: orderSummary(fresh) };
 };
 
-/* ---------- Task 5: webhook ---------- */
+/* ---------- webhook ---------- */
 
 const EVENT_STATUS = {
   "payment.succeeded": "succeeded",

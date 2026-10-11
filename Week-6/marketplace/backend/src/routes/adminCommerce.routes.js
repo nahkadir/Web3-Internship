@@ -11,6 +11,7 @@ import {
   adminListOrdersSchema,
   adminOrderStatusSchema,
 } from "../validators/payment.validator.js";
+import { auditLogsSchema } from "../validators/audit.validator.js";
 
 const router = Router();
 const adminOnly = [authenticate, requireRole(ROLES.ADMIN)];
@@ -48,6 +49,12 @@ router.patch(
   ...adminOnly,
   validate(adminOrderStatusSchema),
   ctrl.updateOrderStatus,
+);
+router.get(
+  "/audit-logs",
+  ...adminOnly,
+  validate(auditLogsSchema),
+  ctrl.auditLogs,
 );
 
 export default router;

@@ -1,4 +1,5 @@
 import { ORDER_STATUS } from "../constants/statuses.js";
+import { ORDER_TRANSITIONS } from "../constants/lifecycle.js";
 
 const { PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED } =
   ORDER_STATUS;
@@ -11,14 +12,7 @@ const RANK = {
 };
 
 // what a vendor may change an order item to
-export const ITEM_TRANSITIONS = {
-  [PENDING]: [CONFIRMED, CANCELLED],
-  [CONFIRMED]: [PROCESSING, CANCELLED],
-  [PROCESSING]: [SHIPPED, CANCELLED],
-  [SHIPPED]: [DELIVERED],
-  [DELIVERED]: [],
-  [CANCELLED]: [],
-};
+export const ITEM_TRANSITIONS = ORDER_TRANSITIONS;
 
 export const TERMINAL = [DELIVERED, CANCELLED];
 

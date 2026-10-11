@@ -1,5 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import * as vendorOrderService from "../services/vendorOrder.service.js";
+import { audit } from "../services/audit.service.js";
 
 export const list = asyncHandler(async (req, res) => {
   res.json({
@@ -24,6 +25,13 @@ export const updateStatus = asyncHandler(async (req, res) => {
     req.params.id,
     req.body.status,
   );
+  await audit({
+    actor: req.user,
+    action: "order.item_status_changed_by_vendor",
+    entityType: "Order",
+    entityId: req.params.id,
+    meta: { vendorId: String(req.vendor._id), to: req.body.status },
+  });
   res.json({
     success: true,
     message: `Order marked ${req.body.status.toLowerCase()}`,

@@ -17,30 +17,15 @@ export default function Navbar() {
 
   return (
     <header className="border-b border-cloud-veil bg-paper-white">
-      <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-3 items-center px-4">
-        <nav className="flex items-center gap-4 text-[14px] text-graphite sm:gap-6">
-          <Link to="/products">Shop</Link>
-          {user && <Link to={DASHBOARD_PATH[user.role]}>Dashboard</Link>}
-          {user && (
-            <Link to="/orders" className="hidden sm:inline">
-              Orders
-            </Link>
-          )}
-          {user?.role === ROLES.VENDOR && (
-            <Link to="/vendor/orders" className="hidden md:inline">
-              Store orders
-            </Link>
-          )}
-        </nav>
-
+      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
         <Link
           to="/products"
-          className="justify-self-center text-[20px] font-black text-graphite"
+          className="order-1 text-[20px] font-black text-graphite"
         >
           {BRAND_NAME}
         </Link>
 
-        <div className="flex items-center justify-end gap-4 text-[14px] text-graphite">
+        <div className="order-2 flex items-center gap-3 text-[14px] text-graphite sm:order-3">
           {user ? (
             <>
               <Link
@@ -53,9 +38,6 @@ export default function Navbar() {
                   {cart.itemCount}
                 </span>
               </Link>
-              <span className="hidden text-slate-gray lg:inline">
-                {user.name}
-              </span>
               <Button
                 type="button"
                 variant="ghost"
@@ -77,6 +59,15 @@ export default function Navbar() {
             </>
           )}
         </div>
+
+        <nav className="order-3 flex w-full items-center gap-5 text-[14px] text-graphite sm:order-2 sm:w-auto sm:flex-1">
+          <Link to="/products">Shop</Link>
+          {user && <Link to={DASHBOARD_PATH[user.role]}>Dashboard</Link>}
+          {user && <Link to="/orders">Orders</Link>}
+          {user?.role === ROLES.VENDOR && (
+            <Link to="/vendor/orders">Store orders</Link>
+          )}
+        </nav>
       </div>
     </header>
   );

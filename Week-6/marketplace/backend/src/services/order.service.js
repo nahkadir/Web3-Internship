@@ -49,8 +49,6 @@ export const groupByVendor = (items) => {
   }));
 };
 
-/* ---------- checkout (Tasks 8 & 10) ---------- */
-
 const restoreStock = async (lines) => {
   if (!lines.length) return;
   await Product.bulkWrite(
@@ -63,11 +61,40 @@ const restoreStock = async (lines) => {
   );
 };
 
-export const placeOrder = async (user) => {
-  const cart = await Cart.findOne({ userId: user._id });
-  const cartItems = cart ? await CartItem.find({ cartId: cart._id }) : [];
-  if (!cartItems.length) throw new AppError("Your cart is empty", 400);
+const CHECKOUT_LOCK_MS = 60 * 1000;
 
+// only ONE checkout per cart can run at a time (a double click or two tabs can't create two orders)
+export const placeOrder = async (user) => {
+  const cart = await Cart.findOneAndUpdate(
+    {
+      userId: user._id,
+      $or: [
+        { checkingOut: { $ne: true } },
+        { checkoutAt: { $lt: new Date(Date.now() - CHECKOUT_LOCK_MS) } },
+      ],
+    },
+    { $set: { checkingOut: true, checkoutAt: new Date() } },
+    { new: true },
+  );
+
+  if (!cart) {
+    const hasCart = await Cart.exists({ userId: user._id });
+    throw new AppError(
+      hasCart ? "A checkout is already in progress" : "Your cart is empty",
+      hasCart ? 409 : 400,
+    );
+  }
+
+  try {
+    return await createOrderFromCart(user, cart);
+  } finally {
+    await Cart.updateOne({ _id: cart._id }, { $set: { checkingOut: false } });
+  }
+};
+
+const createOrderFromCart = async (user, cart) => {
+  const cartItems = await CartItem.find({ cartId: cart._id });
+  if (!cartItems.length) throw new AppError("Your cart is empty", 400);
   // 1. validate every item against the database
   const products = await Product.find({
     _id: { $in: cartItems.map((i) => i.productId) },
