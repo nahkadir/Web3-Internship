@@ -15,6 +15,7 @@ export const validate = (schema) => (req, res, next) => {
     return next(new ApiError(400, "Validation failed", errors));
   }
 
+  req.validated = result.data;
   req.body = result.data.body ?? req.body;
   next();
 };

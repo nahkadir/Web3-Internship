@@ -4,6 +4,7 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { ROLES } from "../constants/roles";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
   const { user: me } = useAuth();
@@ -44,6 +45,13 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout title="Admin Dashboard">
+      <Link
+        to="/admin/tickets"
+        className="text-sm text-indigo-600 inline-block mb-4"
+      >
+        Manage tickets →
+      </Link>
+
       <div className="bg-white rounded-xl shadow overflow-x-auto">
         <h2 className="text-base font-semibold p-4 border-b">
           User management

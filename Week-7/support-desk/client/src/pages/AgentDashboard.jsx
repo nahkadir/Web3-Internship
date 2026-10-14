@@ -1,14 +1,10 @@
 import DashboardLayout from "../components/DashboardLayout";
+import TicketListView from "../components/TicketListView";
 
 export default function AgentDashboard() {
   return (
-    <DashboardLayout title="Agent Dashboard">
-      <div className="bg-white p-6 rounded-xl shadow">
-        <p className="text-gray-600">
-          Your assigned tickets, customer replies, and status updates will
-          appear here.
-        </p>
-      </div>
+    <DashboardLayout title="Assigned Tickets">
+      <TicketListView endpoint="/tickets" showCustomer />
     </DashboardLayout>
   );
 }
