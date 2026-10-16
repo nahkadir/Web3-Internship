@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
+import ConversationPanel from "../components/ConversationPanel";
 import { StatusBadge, PriorityBadge } from "../components/Badges";
 import { useAuth } from "../context/AuthContext";
+import useSocketEvent from "../hooks/useSocketEvent";
 import api from "../services/api";
 import {
   CATEGORIES,
@@ -30,12 +32,28 @@ export default function TicketDetail() {
   const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    api
-      .get(`/tickets/${id}`)
-      .then((res) => setTicket(res.data.data.ticket))
-      .catch((err) => setLoadError(getErrorMessage(err)));
+  const loadTicket = useCallback(async () => {
+    try {
+      const res = await api.get(`/tickets/${id}`);
+      setTicket(res.data.data.ticket);
+      setLoadError("");
+    } catch (err) {
+      setTicket(null); // e.g. an agent who was just reassigned loses access
+      setLoadError(getErrorMessage(err));
+    }
   }, [id]);
+
+  useEffect(() => {
+    loadTicket();
+  }, [loadTicket]);
+
+  // live updates: the events only carry ids, so we re-fetch the role-specific view
+  const onTicketEvent = (payload) => {
+    if (payload.ticketId === id) loadTicket();
+  };
+  useSocketEvent("ticket_updated", onTicketEvent);
+  useSocketEvent("ticket_status_changed", onTicketEvent);
+  useSocketEvent("ticket_assigned", onTicketEvent);
 
   useEffect(() => {
     if (!ticket) return;
@@ -94,90 +112,102 @@ export default function TicketDetail() {
 
       {ticket && (
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-sm text-gray-500">
-                {ticket.ticketNumber}
-              </span>
-              <StatusBadge status={ticket.status} />
-              <PriorityBadge priority={ticket.priority} />
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-white p-6 rounded-xl shadow space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-sm text-gray-500">
+                  {ticket.ticketNumber}
+                </span>
+                <StatusBadge status={ticket.status} />
+                <PriorityBadge priority={ticket.priority} />
+              </div>
+
+              {actionError && (
+                <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                  {actionError}
+                </p>
+              )}
+
+              {canEdit("subject") ? (
+                <input
+                  className={input}
+                  value={form.subject || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, subject: e.target.value })
+                  }
+                />
+              ) : (
+                <h2 className="text-xl font-semibold">{ticket.subject}</h2>
+              )}
+
+              {canEdit("description") ? (
+                <textarea
+                  rows={6}
+                  className={input}
+                  value={form.description || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                />
+              ) : (
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {ticket.description}
+                </p>
+              )}
+
+              {(canEdit("category") || canEdit("priority")) && (
+                <div className="grid grid-cols-2 gap-3">
+                  {canEdit("category") && (
+                    <select
+                      className={input}
+                      value={form.category || ""}
+                      onChange={(e) =>
+                        setForm({ ...form, category: e.target.value })
+                      }
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c} value={c}>
+                          {label(c)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {canEdit("priority") && (
+                    <select
+                      className={input}
+                      value={form.priority || ""}
+                      onChange={(e) =>
+                        setForm({ ...form, priority: e.target.value })
+                      }
+                    >
+                      {PRIORITIES.map((p) => (
+                        <option key={p} value={p}>
+                          {label(p)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+
+              {ticket.editableFields.length > 0 && (
+                <button
+                  disabled={!hasChanges || busy}
+                  onClick={() =>
+                    run(() => api.patch(`/tickets/${id}`, changes))
+                  }
+                  className="bg-indigo-600 text-white text-sm rounded-lg px-4 py-2 disabled:opacity-50"
+                >
+                  Save changes
+                </button>
+              )}
             </div>
 
-            {actionError && (
-              <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                {actionError}
-              </p>
-            )}
-
-            {canEdit("subject") ? (
-              <input
-                className={input}
-                value={form.subject || ""}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-              />
-            ) : (
-              <h2 className="text-xl font-semibold">{ticket.subject}</h2>
-            )}
-
-            {canEdit("description") ? (
-              <textarea
-                rows={6}
-                className={input}
-                value={form.description || ""}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-              />
-            ) : (
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {ticket.description}
-              </p>
-            )}
-
-            {(canEdit("category") || canEdit("priority")) && (
-              <div className="grid grid-cols-2 gap-3">
-                {canEdit("category") && (
-                  <select
-                    className={input}
-                    value={form.category || ""}
-                    onChange={(e) =>
-                      setForm({ ...form, category: e.target.value })
-                    }
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {label(c)}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {canEdit("priority") && (
-                  <select
-                    className={input}
-                    value={form.priority || ""}
-                    onChange={(e) =>
-                      setForm({ ...form, priority: e.target.value })
-                    }
-                  >
-                    {PRIORITIES.map((p) => (
-                      <option key={p} value={p}>
-                        {label(p)}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            )}
-
-            {ticket.editableFields.length > 0 && (
-              <button
-                disabled={!hasChanges || busy}
-                onClick={() => run(() => api.patch(`/tickets/${id}`, changes))}
-                className="bg-indigo-600 text-white text-sm rounded-lg px-4 py-2 disabled:opacity-50"
-              >
-                Save changes
-              </button>
-            )}
+            <ConversationPanel
+              key={id}
+              ticketId={id}
+              closed={TERMINAL.includes(ticket.status)}
+            />
           </div>
 
           <div className="space-y-4">

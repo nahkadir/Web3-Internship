@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { SocketProvider } from "./context/SocketContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import GuestRoute from "./routes/GuestRoute";
 import RoleRoute from "./routes/RoleRoute";
@@ -19,32 +20,34 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route element={<GuestRoute />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Route>
-
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            <Route path="/tickets/:id" element={<TicketDetail />} />
-
-            <Route element={<RoleRoute allowedRoles={[ROLES.CUSTOMER]} />}>
-              <Route path="/customer" element={<CustomerDashboard />} />
-              <Route path="/customer/new" element={<NewTicket />} />
+        <SocketProvider>
+          <Routes>
+            <Route element={<GuestRoute />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
             </Route>
-            <Route element={<RoleRoute allowedRoles={[ROLES.AGENT]} />}>
-              <Route path="/agent" element={<AgentDashboard />} />
-            </Route>
-            <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/tickets" element={<AdminTickets />} />
-            </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/tickets/:id" element={<TicketDetail />} />
+
+              <Route element={<RoleRoute allowedRoles={[ROLES.CUSTOMER]} />}>
+                <Route path="/customer" element={<CustomerDashboard />} />
+                <Route path="/customer/new" element={<NewTicket />} />
+              </Route>
+              <Route element={<RoleRoute allowedRoles={[ROLES.AGENT]} />}>
+                <Route path="/agent" element={<AgentDashboard />} />
+              </Route>
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/tickets" element={<AdminTickets />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
   );

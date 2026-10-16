@@ -7,15 +7,11 @@ import {
   TRANSITIONS,
   EDITABLE_FIELDS,
 } from "../constants/ticket.js";
+import { scopeFor, findScoped } from "./ticketAccess.js";
+import { recordStatusChange, recordAssignment } from "./message.service.js";
+import { emitTo, ticketRoom } from "../realtime/socket.js";
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-// which tickets a role may even see
-const scopeFor = (user) => {
-  if (user.role === ROLES.CUSTOMER) return { createdBy: user._id };
-  if (user.role === ROLES.AGENT) return { assignedTo: user._id };
-  return {};
-};
 
 // customers see names only; staff also see emails
 const populateFor = (user) => {
@@ -38,12 +34,6 @@ const serialize = (ticket, user) => ({
   allowedStatuses: TRANSITIONS[user.role]?.[ticket.status] ?? [],
   editableFields: editableFieldsFor(user, ticket),
 });
-
-const findScoped = async (user, id) => {
-  const ticket = await Ticket.findOne({ _id: id, ...scopeFor(user) });
-  if (!ticket) throw new ApiError(404, "Ticket not found");
-  return ticket;
-};
 
 export const createTicket = async (
   user,
@@ -135,6 +125,13 @@ export const updateTicket = async (user, id, updates) => {
 
   ticket.set(updates);
   await ticket.save();
+
+  emitTo(ticketRoom(ticket._id), "ticket_updated", {
+    ticketId: String(ticket._id),
+    fields: Object.keys(updates),
+    updatedBy: { _id: String(user._id), name: user.name },
+  });
+
   await ticket.populate(populateFor(user));
   return serialize(ticket, user);
 };
@@ -156,14 +153,18 @@ export const changeStatus = async (user, id, status) => {
         );
   }
 
+  const previousStatus = ticket.status;
+
   if (status === STATUS.RESOLVED) {
     ticket.resolvedAt = new Date();
-  } else if (ticket.status === STATUS.RESOLVED && status !== STATUS.CLOSED) {
+  } else if (previousStatus === STATUS.RESOLVED && status !== STATUS.CLOSED) {
     ticket.resolvedAt = null; // reopened
   }
 
   ticket.status = status;
   await ticket.save();
+  await recordStatusChange(ticket, previousStatus, user);
+
   await ticket.populate(populateFor(user));
   return serialize(ticket, user);
 };
@@ -182,8 +183,16 @@ export const assignTicket = async (admin, id, agentId) => {
   });
   if (!agent) throw new ApiError(400, "Selected user is not an active agent");
 
+  const previousAgentId = ticket.assignedTo;
+  if (previousAgentId && String(previousAgentId) === agent.id) {
+    await ticket.populate(populateFor(admin)); // already assigned to this agent, nothing to do
+    return serialize(ticket, admin);
+  }
+
   ticket.assignedTo = agent._id;
   await ticket.save();
+  await recordAssignment(ticket, agent, previousAgentId, admin);
+
   await ticket.populate(populateFor(admin));
   return serialize(ticket, admin);
 };

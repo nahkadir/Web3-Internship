@@ -7,7 +7,7 @@ const clean = (obj) =>
     Object.entries(obj).filter(([, v]) => v !== "" && v != null),
   );
 
-export default function useTickets(endpoint, params) {
+export default function useTickets(endpoint, params, refreshKey = 0) {
   const [data, setData] = useState({
     tickets: [],
     pagination: { page: 1, pages: 1, total: 0 },
@@ -34,7 +34,7 @@ export default function useTickets(endpoint, params) {
       ignore = true;
       clearTimeout(timer);
     };
-  }, [endpoint, key]);
+  }, [endpoint, key, refreshKey]);
 
   return { ...data, loading, error };
 }

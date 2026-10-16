@@ -54,3 +54,5 @@ export const EDITABLE_FIELDS = {
   AGENT: ["priority", "category"],
   ADMIN: ["priority", "category"],
 };
+
+export const MESSAGE_EDIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes

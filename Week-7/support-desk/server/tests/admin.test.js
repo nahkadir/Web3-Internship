@@ -72,7 +72,7 @@ describe("PATCH /api/admin/users/:id/role", () => {
   it("ADMIN can promote a user to AGENT", async () => {
     const { agent } = await loginAs("ADMIN");
     const target = await User.create({
-      name: "T",
+      name: "Target",
       email: "t@test.com",
       password,
     });
@@ -86,7 +86,7 @@ describe("PATCH /api/admin/users/:id/role", () => {
   it("rejects an invalid role with 400", async () => {
     const { agent } = await loginAs("ADMIN");
     const target = await User.create({
-      name: "T",
+      name: "Target",
       email: "t@test.com",
       password,
     });

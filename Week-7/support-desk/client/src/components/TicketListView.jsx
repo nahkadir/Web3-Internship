@@ -4,6 +4,7 @@ import api from "../services/api";
 import useTickets from "../hooks/useTickets";
 import { StatusBadge, PriorityBadge } from "./Badges";
 import { STATUSES, PRIORITIES, CATEGORIES, label } from "../constants/ticket";
+import useSocketEvent from "../hooks/useSocketEvent";
 
 const initial = {
   search: "",
@@ -34,15 +35,21 @@ export default function TicketListView({
 }) {
   const [filters, setFilters] = useState(initial);
   const [agents, setAgents] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  useSocketEvent("ticket_assigned", () => setRefreshKey((k) => k + 1)); // agents see new assignments live
   const [sortBy, order] = filters.sort.split(":");
 
-  const { tickets, pagination, loading, error } = useTickets(endpoint, {
-    ...filters,
-    sortBy,
-    order,
-    sort: undefined,
-    limit: 10,
-  });
+  const { tickets, pagination, loading, error } = useTickets(
+    endpoint,
+    {
+      ...filters,
+      sortBy,
+      order,
+      sort: undefined,
+      limit: 10,
+    },
+    refreshKey,
+  );
 
   useEffect(() => {
     if (!isAdmin) return;
