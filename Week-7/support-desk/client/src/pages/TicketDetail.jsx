@@ -15,6 +15,7 @@ import {
 } from "../constants/ticket";
 import { ROLE_HOME } from "../constants/roles";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { SlaPanel } from "../components/Sla";
 
 const input = "w-full border rounded-lg px-3 py-2 text-sm bg-white";
 
@@ -242,6 +243,8 @@ export default function TicketDetail() {
                 {ticket.assignedTo?.name || "Unassigned"}
               </p>
             </div>
+
+            <SlaPanel sla={ticket.sla} />
 
             {ticket.allowedStatuses.length > 0 && (
               <div className="bg-white p-6 rounded-xl shadow space-y-2">

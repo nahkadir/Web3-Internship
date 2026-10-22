@@ -15,6 +15,10 @@ import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/authorize.js";
 import { validate } from "../middleware/validate.js";
 import {
+  ticketCreateLimiter,
+  messageLimiter,
+} from "../middleware/rateLimiters.js";
+import {
   createTicketSchema,
   listTicketsSchema,
   ticketIdSchema,
@@ -35,6 +39,7 @@ router.use(protect);
 router.post(
   "/",
   authorize(ROLES.CUSTOMER),
+  ticketCreateLimiter,
   validate(createTicketSchema),
   createTicket,
 );
@@ -44,9 +49,15 @@ router.patch("/:id", validate(updateTicketSchema), updateTicket);
 router.patch("/:id/status", validate(statusSchema), changeStatus);
 
 router.get("/:id/messages", validate(listMessagesSchema), listMessages);
-router.post("/:id/messages", validate(createMessageSchema), createMessage);
+router.post(
+  "/:id/messages",
+  messageLimiter,
+  validate(createMessageSchema),
+  createMessage,
+);
 router.patch(
   "/:id/messages/:messageId",
+  messageLimiter,
   validate(editMessageSchema),
   editMessage,
 );

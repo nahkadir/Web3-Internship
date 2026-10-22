@@ -57,7 +57,7 @@ export const assignSchema = z.object({
 export const listTicketsSchema = z.object({
   query: z
     .object({
-      page: z.coerce.number().int().min(1).default(1),
+      page: z.coerce.number().int().min(1).max(10000).default(1),
       limit: z.coerce.number().int().min(1).max(100).default(10),
       status: z.enum(Object.values(STATUS)).optional(),
       priority: priority.optional(),
@@ -65,6 +65,7 @@ export const listTicketsSchema = z.object({
       assignedTo: z
         .union([objectId("Invalid agent id"), z.literal("unassigned")])
         .optional(),
+      overdue: z.enum(["true", "false"]).optional(),
       from: z.coerce.date().optional(),
       to: z.coerce.date().optional(),
       search: z.string().trim().max(100).optional(),

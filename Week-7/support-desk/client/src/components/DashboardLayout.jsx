@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 const badge = {
   CUSTOMER: "bg-blue-100 text-blue-700",
@@ -19,10 +20,13 @@ export default function DashboardLayout({ title, children }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <h1 className="text-lg font-semibold">{title}</h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">{user.name}</span>
+            <NotificationBell />
+            <span className="text-sm text-gray-600 hidden sm:inline">
+              {user.name}
+            </span>
             <span
               className={`text-xs px-2 py-1 rounded-full ${badge[user.role]}`}
             >

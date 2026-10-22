@@ -1,4 +1,5 @@
 import TicketMessage, { MESSAGE_TYPE } from "../models/TicketMessage.js";
+import { NOTIFICATION_TYPE } from "../models/Notification.js";
 import { ROLES } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import {
@@ -7,6 +8,7 @@ import {
   MESSAGE_EDIT_WINDOW_MS,
 } from "../constants/ticket.js";
 import { findScoped } from "./ticketAccess.js";
+import { notifyUsers, adminIds } from "./notification.service.js";
 import {
   emitTo,
   ticketRoom,
@@ -19,7 +21,6 @@ const pretty = (s) => {
   return t.charAt(0).toUpperCase() + t.slice(1);
 };
 
-// save first, then return the JSON shape that is both sent in the API response and broadcast
 const store = async (data) => {
   const doc = await TicketMessage.create(data);
   await doc.populate({ path: "senderId", select: "name role" });
@@ -40,7 +41,12 @@ export const createSystemMessage = async (ticketId, actorId, text) => {
   return message;
 };
 
-export const recordStatusChange = async (ticket, previousStatus, actor) => {
+export const recordStatusChange = async (
+  ticket,
+  previousStatus,
+  actor,
+  { notify = true } = {},
+) => {
   await createSystemMessage(
     ticket._id,
     actor._id,
@@ -52,6 +58,25 @@ export const recordStatusChange = async (ticket, previousStatus, actor) => {
     previousStatus,
     changedBy: { _id: String(actor._id), name: actor.name },
   });
+
+  if (!notify) return;
+  const resolved = ticket.status === STATUS.RESOLVED;
+  const others = (
+    resolved ? [ticket.createdBy] : [ticket.createdBy, ticket.assignedTo]
+  ).filter((id) => id && String(id) !== String(actor._id));
+
+  await notifyUsers(others, {
+    ticket,
+    type: resolved
+      ? NOTIFICATION_TYPE.TICKET_RESOLVED
+      : NOTIFICATION_TYPE.STATUS_CHANGED,
+    title: resolved
+      ? `Ticket ${ticket.ticketNumber} resolved`
+      : `Ticket ${ticket.ticketNumber} status updated`,
+    message: resolved
+      ? `${actor.name} marked "${ticket.subject}" as resolved`
+      : `${actor.name} changed the status to ${pretty(ticket.status)}`,
+  });
 };
 
 export const recordAssignment = async (
@@ -60,7 +85,6 @@ export const recordAssignment = async (
   previousAgentId,
   actor,
 ) => {
-  // revoke the previous agent's live access first so they don't receive anything further
   if (previousAgentId) removeUserFromTicket(previousAgentId, ticket._id);
 
   await createSystemMessage(
@@ -76,6 +100,19 @@ export const recordAssignment = async (
   emitTo(rooms, "ticket_assigned", {
     ticketId: String(ticket._id),
     assignedTo: { _id: agent.id, name: agent.name },
+  });
+
+  await notifyUsers([agent.id], {
+    ticket,
+    type: NOTIFICATION_TYPE.TICKET_ASSIGNED,
+    title: `Ticket assigned to you: ${ticket.ticketNumber}`,
+    message: ticket.subject,
+  });
+  await notifyUsers([ticket.createdBy], {
+    ticket,
+    type: NOTIFICATION_TYPE.TICKET_ASSIGNED,
+    title: `Your ticket ${ticket.ticketNumber} was assigned`,
+    message: `${agent.name} will help you with "${ticket.subject}"`,
   });
 };
 
@@ -95,16 +132,46 @@ export const createMessage = async (user, ticketId, text) => {
   });
   broadcastMessage(ticket._id, message);
 
-  // the customer answered, so the ticket is no longer waiting on them
-  if (
-    user.role === ROLES.CUSTOMER &&
-    ticket.status === STATUS.WAITING_FOR_CUSTOMER
-  ) {
-    const previous = ticket.status;
-    ticket.status = STATUS.IN_PROGRESS;
-    await ticket.save();
-    await recordStatusChange(ticket, previous, user);
+  const isCustomer = user.role === ROLES.CUSTOMER;
+  let dirty = false;
+  let previousStatus = null;
+
+  // SLA: the first reply from an agent or admin is the "first response"
+  if (!isCustomer && !ticket.firstRespondedAt) {
+    const now = new Date();
+    ticket.firstRespondedAt = now;
+    ticket.slaFirstResponseBreached = ticket.firstResponseDueAt
+      ? now > ticket.firstResponseDueAt
+      : false;
+    dirty = true;
   }
+
+  // the customer answered, so the ticket is no longer waiting on them
+  if (isCustomer && ticket.status === STATUS.WAITING_FOR_CUSTOMER) {
+    previousStatus = ticket.status;
+    ticket.status = STATUS.IN_PROGRESS;
+    dirty = true;
+  }
+
+  if (dirty) await ticket.save();
+  if (previousStatus)
+    await recordStatusChange(ticket, previousStatus, user, { notify: false });
+
+  const recipients = isCustomer
+    ? ticket.assignedTo
+      ? [ticket.assignedTo]
+      : await adminIds()
+    : [ticket.createdBy, ticket.assignedTo];
+
+  await notifyUsers(
+    recipients.filter((id) => id && String(id) !== String(user._id)),
+    {
+      ticket,
+      type: NOTIFICATION_TYPE.NEW_REPLY,
+      title: `New reply on ${ticket.ticketNumber}`,
+      message: `${user.name}: ${text.slice(0, 100)}`,
+    },
+  );
 
   return message;
 };
@@ -117,7 +184,7 @@ export const listMessages = async (user, ticketId, { limit, before }) => {
 
   const docs = await TicketMessage.find(filter)
     .sort({ _id: -1 })
-    .limit(limit + 1) // one extra tells us whether older messages exist
+    .limit(limit + 1)
     .populate("senderId", "name role");
 
   return {
@@ -154,6 +221,6 @@ export const editMessage = async (user, ticketId, messageId, text) => {
   await doc.populate({ path: "senderId", select: "name role" });
 
   const message = doc.toJSON();
-  broadcastMessage(ticket._id, message); // clients upsert by _id, so an edit replaces the old copy
+  broadcastMessage(ticket._id, message);
   return message;
 };

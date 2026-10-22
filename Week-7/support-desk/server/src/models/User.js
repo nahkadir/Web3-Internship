@@ -37,7 +37,10 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
-  this.password = await bcrypt.hash(this.password, 12);
+  this.password = await bcrypt.hash(
+    this.password,
+    process.env.NODE_ENV === "test" ? 4 : 12,
+  );
 });
 
 userSchema.methods.comparePassword = function (candidate) {
@@ -51,5 +54,7 @@ userSchema.set("toJSON", {
     return ret;
   },
 });
+
+userSchema.index({ role: 1, createdAt: -1 });
 
 export default mongoose.model("User", userSchema);

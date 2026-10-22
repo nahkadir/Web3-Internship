@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { env } from "./env.js";
+import { logger } from "../utils/logger.js";
 
 let connecting = null;
 
@@ -12,5 +13,5 @@ export const connectDB = async () => {
     connecting = null;
     throw err;
   }
-  console.log(`MongoDB connected: ${mongoose.connection.host}`);
+  logger.info(`MongoDB connected: ${mongoose.connection.host}`);
 };

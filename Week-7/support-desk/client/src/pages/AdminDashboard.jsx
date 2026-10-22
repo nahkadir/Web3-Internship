@@ -45,12 +45,14 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      <Link
-        to="/admin/tickets"
-        className="text-sm text-indigo-600 inline-block mb-4"
-      >
-        Manage tickets →
-      </Link>
+      <div className="flex gap-4 mb-4 text-sm">
+        <Link to="/admin/tickets" className="text-indigo-600">
+          Manage tickets →
+        </Link>
+        <Link to="/admin/analytics" className="text-indigo-600">
+          Analytics →
+        </Link>
+      </div>
 
       <div className="bg-white rounded-xl shadow overflow-x-auto">
         <h2 className="text-base font-semibold p-4 border-b">

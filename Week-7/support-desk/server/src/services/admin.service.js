@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const listUsers = async ({ page, limit, role, search }) => {
-  page = Math.max(parseInt(page) || 1, 1);
+  page = Math.min(Math.max(parseInt(page) || 1, 1), 10000);
   limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
 
   const filter = {};

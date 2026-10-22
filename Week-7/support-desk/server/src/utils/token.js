@@ -10,3 +10,6 @@ export const cookieOptions = {
   sameSite: env.nodeEnv === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
+export const signSocketToken = (id) =>
+  jwt.sign({ id, purpose: "socket" }, env.jwtSecret, { expiresIn: "2m" });

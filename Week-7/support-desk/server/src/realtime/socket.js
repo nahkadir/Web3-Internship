@@ -2,22 +2,14 @@ import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { env } from "../config/env.js";
+import { logger } from "../utils/logger.js";
 import { canAccessTicket } from "../services/ticketAccess.js";
-
-const getCookie = (header = "", name) => {
-  for (const part of header.split(";")) {
-    const [key, ...rest] = part.trim().split("=");
-    if (key === name) return decodeURIComponent(rest.join("="));
-  }
-  return undefined;
-};
 
 let io = null;
 
 export const ticketRoom = (ticketId) => `ticket:${ticketId}`;
 export const userRoom = (userId) => `user:${userId}`;
 
-// no-ops when sockets aren't running (e.g. REST-only tests)
 export const emitTo = (rooms, event, payload) => {
   io?.to(rooms).emit(event, payload);
 };
@@ -28,7 +20,6 @@ export const removeUserFromTicket = (userId, ticketId) => {
 
 const publicUser = (u) => ({ _id: u.id, name: u.name, role: u.role });
 
-// distinct users currently in a room, ignoring one socket
 const usersInRoom = async (room, ignoreSocketId) => {
   const sockets = await io.in(room).fetchSockets();
   const users = new Map();
@@ -39,18 +30,49 @@ const usersInRoom = async (room, ignoreSocketId) => {
   return users;
 };
 
+const getCookie = (header = "", name) => {
+  for (const part of header.split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+    if (key === name) return decodeURIComponent(rest.join("="));
+  }
+  return undefined;
+};
+
+// a short-lived socket token (cross-domain setups) or the normal login cookie (same-site setups)
+const userIdFromHandshake = (socket) => {
+  const authToken = socket.handshake.auth?.token;
+  if (typeof authToken === "string" && authToken) {
+    const decoded = jwt.verify(authToken, env.jwtSecret);
+    if (decoded.purpose !== "socket") throw new Error("Wrong token type");
+    return decoded.id;
+  }
+  const cookieToken = getCookie(socket.handshake.headers.cookie, "token");
+  if (!cookieToken) throw new Error("No token");
+  const decoded = jwt.verify(cookieToken, env.jwtSecret);
+  if (decoded.purpose) throw new Error("Wrong token type");
+  return decoded.id;
+};
+
+const MAX_TICKET_ROOMS = 20;
+const RATE_WINDOW_MS = 10_000;
+const RATE_MAX_EVENTS = 40;
+
 export const initSocket = (httpServer) => {
   io = new Server(httpServer, {
-    cors: { origin: env.clientUrl, credentials: true },
+    cors: { origin: env.clientUrls, credentials: true },
+    maxHttpBufferSize: 1e5, // 100 KB per message, so nobody can push huge payloads
   });
 
-  // 1) authenticate every connection using the same httpOnly cookie as the REST API
+  io.engine.on("connection_error", (err) =>
+    logger.warn("Socket engine error", {
+      code: err.code,
+      message: err.message,
+    }),
+  );
+
   io.use(async (socket, next) => {
     try {
-      const token = getCookie(socket.handshake.headers.cookie, "token");
-      if (!token) return next(new Error("Not authenticated"));
-      const { id } = jwt.verify(token, env.jwtSecret);
-      const user = await User.findById(id);
+      const user = await User.findById(userIdFromHandshake(socket));
       if (!user || !user.isActive) return next(new Error("Not authenticated"));
       socket.data.user = { id: user.id, name: user.name, role: user.role };
       next();
@@ -61,11 +83,28 @@ export const initSocket = (httpServer) => {
 
   io.on("connection", (socket) => {
     const me = socket.data.user;
-    socket.join(userRoom(me.id)); // personal room for events like "you were assigned a ticket"
+    socket.join(userRoom(me.id));
+
+    // errors on one connection are logged and contained; they never reach the process
+    socket.on("error", (err) =>
+      logger.warn("Socket error", { userId: me.id, error: err.message }),
+    );
+
+    let windowStart = Date.now();
+    let count = 0;
+    socket.use((packet, next) => {
+      const now = Date.now();
+      if (now - windowStart > RATE_WINDOW_MS) {
+        windowStart = now;
+        count = 0;
+      }
+      if (++count > RATE_MAX_EVENTS)
+        return next(new Error("Rate limit exceeded"));
+      next();
+    });
 
     const announceLeft = async (room) => {
       const others = await usersInRoom(room, socket.id);
-      // only announce when this was the user's last open tab/connection in the room
       if (!others.has(me.id)) {
         io.to(room).emit("user_left", {
           ticketId: room.slice("ticket:".length),
@@ -74,10 +113,15 @@ export const initSocket = (httpServer) => {
       }
     };
 
-    // 2) rooms: join only if the database says this user may access the ticket
     socket.on("join_ticket", async (ticketId, ack) => {
       const reply = typeof ack === "function" ? ack : () => {};
       try {
+        const joined = [...socket.rooms].filter((r) =>
+          r.startsWith("ticket:"),
+        ).length;
+        if (joined >= MAX_TICKET_ROOMS)
+          return reply({ ok: false, message: "Too many open tickets" });
+
         if (!(await canAccessTicket(me.id, ticketId))) {
           return reply({
             ok: false,

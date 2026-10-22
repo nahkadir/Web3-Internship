@@ -6,6 +6,7 @@ import {
   CATEGORY,
   PRIORITY_RANK,
 } from "../constants/ticket.js";
+import { applySlaDeadlines } from "../constants/sla.js";
 
 const ticketSchema = new mongoose.Schema(
   {
@@ -46,7 +47,7 @@ const ticketSchema = new mongoose.Schema(
       enum: Object.values(PRIORITY),
       default: PRIORITY.MEDIUM,
     },
-    priorityRank: { type: Number, default: PRIORITY_RANK.MEDIUM }, // lets us sort priority correctly
+    priorityRank: { type: Number, default: PRIORITY_RANK.MEDIUM },
     status: {
       type: String,
       enum: Object.values(STATUS),
@@ -54,23 +55,40 @@ const ticketSchema = new mongoose.Schema(
       index: true,
     },
     resolvedAt: { type: Date, default: null },
+
+    // SLA
+    firstResponseDueAt: { type: Date, default: null },
+    resolutionDueAt: { type: Date, default: null },
+    firstRespondedAt: { type: Date, default: null },
+    slaFirstResponseBreached: { type: Boolean, default: false },
+    slaResolutionBreached: { type: Boolean, default: false },
+    slaWarned: {
+      firstResponse: { type: Boolean, default: false },
+      resolution: { type: Boolean, default: false },
+    },
   },
   { timestamps: true },
 );
 
 ticketSchema.index({ createdAt: -1 });
+ticketSchema.index({ createdBy: 1, createdAt: -1 });
+ticketSchema.index({ assignedTo: 1, createdAt: -1 });
+ticketSchema.index({ status: 1, firstRespondedAt: 1, firstResponseDueAt: 1 });
+ticketSchema.index({ status: 1, resolvedAt: 1, resolutionDueAt: 1 });
 
 ticketSchema.pre("validate", async function () {
   if (this.isNew && !this.ticketNumber) {
     const counter = await Counter.findOneAndUpdate(
       { _id: "ticket" },
       { $inc: { seq: 1 } },
-      { new: true, upsert: true },
+      { returnDocument: "after", upsert: true },
     );
     this.ticketNumber = `TKT-${String(counter.seq).padStart(6, "0")}`;
   }
-  if (this.isModified("priority"))
+  if (this.isNew || this.isModified("priority")) {
     this.priorityRank = PRIORITY_RANK[this.priority];
+    applySlaDeadlines(this);
+  }
 });
 
 ticketSchema.set("toJSON", {

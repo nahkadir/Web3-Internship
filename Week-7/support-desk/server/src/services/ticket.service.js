@@ -1,5 +1,6 @@
 import Ticket from "../models/Ticket.js";
 import User, { ROLES } from "../models/User.js";
+import { NOTIFICATION_TYPE } from "../models/Notification.js";
 import { ApiError } from "../utils/ApiError.js";
 import {
   STATUS,
@@ -7,13 +8,14 @@ import {
   TRANSITIONS,
   EDITABLE_FIELDS,
 } from "../constants/ticket.js";
+import { ACTIVE_STATUSES, computeSla } from "../constants/sla.js";
 import { scopeFor, findScoped } from "./ticketAccess.js";
 import { recordStatusChange, recordAssignment } from "./message.service.js";
+import { notifyUsers, adminIds } from "./notification.service.js";
 import { emitTo, ticketRoom } from "../realtime/socket.js";
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// customers see names only; staff also see emails
 const populateFor = (user) => {
   const select = user.role === ROLES.CUSTOMER ? "name" : "name email";
   return [
@@ -28,11 +30,11 @@ const editableFieldsFor = (user, ticket) => {
   return EDITABLE_FIELDS[user.role] ?? [];
 };
 
-// the frontend uses these two lists to decide which buttons and inputs to show
 const serialize = (ticket, user) => ({
   ...ticket.toJSON(),
   allowedStatuses: TRANSITIONS[user.role]?.[ticket.status] ?? [],
   editableFields: editableFieldsFor(user, ticket),
+  sla: computeSla(ticket),
 });
 
 export const createTicket = async (
@@ -45,12 +47,19 @@ export const createTicket = async (
     category,
     createdBy: user._id,
   });
+
+  await notifyUsers(await adminIds(), {
+    ticket,
+    type: NOTIFICATION_TYPE.TICKET_CREATED,
+    title: `New ticket ${ticket.ticketNumber}`,
+    message: `${user.name} opened "${ticket.subject}"`,
+  });
+
   await ticket.populate(populateFor(user));
   return serialize(ticket, user);
 };
 
 export const listTickets = async (user, q) => {
-  // scope is always the first condition, so filters can never widen access
   const conditions = [scopeFor(user)];
 
   if (q.status) conditions.push({ status: q.status });
@@ -61,12 +70,23 @@ export const listTickets = async (user, q) => {
       assignedTo: q.assignedTo === "unassigned" ? null : q.assignedTo,
     });
 
+  if (q.overdue === "true") {
+    const now = new Date();
+    conditions.push({
+      status: { $in: ACTIVE_STATUSES },
+      $or: [
+        { firstRespondedAt: null, firstResponseDueAt: { $lt: now } },
+        { resolvedAt: null, resolutionDueAt: { $lt: now } },
+      ],
+    });
+  }
+
   if (q.from || q.to) {
     const range = {};
     if (q.from) range.$gte = q.from;
     if (q.to) {
       const end = new Date(q.to);
-      end.setUTCHours(23, 59, 59, 999); // include the whole "to" day
+      end.setUTCHours(23, 59, 59, 999);
       range.$lte = end;
     }
     conditions.push({ createdAt: range });
@@ -83,7 +103,7 @@ export const listTickets = async (user, q) => {
 
   const [tickets, total] = await Promise.all([
     Ticket.find(filter)
-      .sort({ [sortField]: dir, _id: dir }) // _id keeps pagination stable on ties
+      .sort({ [sortField]: dir, _id: dir })
       .skip((q.page - 1) * q.limit)
       .limit(q.limit)
       .populate(populateFor(user)),
@@ -124,7 +144,7 @@ export const updateTicket = async (user, id, updates) => {
   }
 
   ticket.set(updates);
-  await ticket.save();
+  await ticket.save(); // a priority change recalculates the unmet SLA deadlines (see Ticket model hook)
 
   emitTo(ticketRoom(ticket._id), "ticket_updated", {
     ticketId: String(ticket._id),
@@ -154,11 +174,26 @@ export const changeStatus = async (user, id, status) => {
   }
 
   const previousStatus = ticket.status;
+  const now = new Date();
 
   if (status === STATUS.RESOLVED) {
-    ticket.resolvedAt = new Date();
+    ticket.resolvedAt = now;
+    ticket.slaResolutionBreached = ticket.resolutionDueAt
+      ? now > ticket.resolutionDueAt
+      : false;
+    if (!ticket.firstRespondedAt) {
+      // resolving without a reply still counts as having responded
+      ticket.firstRespondedAt = now;
+      ticket.slaFirstResponseBreached = ticket.firstResponseDueAt
+        ? now > ticket.firstResponseDueAt
+        : false;
+    }
   } else if (previousStatus === STATUS.RESOLVED && status !== STATUS.CLOSED) {
-    ticket.resolvedAt = null; // reopened
+    ticket.resolvedAt = null; // reopened: the resolution target is pending again
+    ticket.slaResolutionBreached = ticket.resolutionDueAt
+      ? now > ticket.resolutionDueAt
+      : false;
+    ticket.slaWarned.resolution = false;
   }
 
   ticket.status = status;
@@ -185,7 +220,7 @@ export const assignTicket = async (admin, id, agentId) => {
 
   const previousAgentId = ticket.assignedTo;
   if (previousAgentId && String(previousAgentId) === agent.id) {
-    await ticket.populate(populateFor(admin)); // already assigned to this agent, nothing to do
+    await ticket.populate(populateFor(admin));
     return serialize(ticket, admin);
   }
 

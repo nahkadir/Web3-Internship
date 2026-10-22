@@ -15,6 +15,7 @@ import NewTicket from "./pages/NewTicket";
 import TicketDetail from "./pages/TicketDetail";
 import Unauthorized from "./pages/Unauthorized";
 import { ROLES } from "./constants/roles";
+import AdminAnalytics from "./pages/AdminAnalytics";
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/tickets" element={<AdminTickets />} />
+                <Route path="/admin/analytics" element={<AdminAnalytics />} />
               </Route>
             </Route>
 

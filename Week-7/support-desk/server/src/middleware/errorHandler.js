@@ -1,8 +1,9 @@
 import { ApiError } from "../utils/ApiError.js";
 import { env } from "../config/env.js";
+import { logger } from "../utils/logger.js";
 
 export const notFound = (req, res, next) => {
-  next(new ApiError(404, `Route not found: ${req.method} ${req.originalUrl}`));
+  next(new ApiError(404, `Route not found: ${req.method} ${req.path}`));
 };
 
 export const errorHandler = (err, req, res, next) => {
@@ -10,7 +11,13 @@ export const errorHandler = (err, req, res, next) => {
   let message = err.message || "Internal server error";
   let errors = err.errors || null;
 
-  if (err.name === "ValidationError") {
+  if (err.type === "entity.parse.failed") {
+    statusCode = 400;
+    message = "Invalid JSON body";
+  } else if (err.type === "entity.too.large") {
+    statusCode = 413;
+    message = "Request body too large";
+  } else if (err.name === "ValidationError") {
     statusCode = 400;
     message = "Validation failed";
     errors = Object.values(err.errors).map((e) => ({
@@ -22,8 +29,7 @@ export const errorHandler = (err, req, res, next) => {
     message = `Invalid ${err.path}`;
   } else if (err.code === 11000) {
     statusCode = 409;
-    const field = Object.keys(err.keyValue)[0];
-    message = `${field} already exists`;
+    message = `${Object.keys(err.keyValue)[0]} already exists`;
   } else if (
     err.name === "JsonWebTokenError" ||
     err.name === "TokenExpiredError"
@@ -32,16 +38,19 @@ export const errorHandler = (err, req, res, next) => {
     message = "Invalid or expired token";
   }
 
-  if (statusCode === 500) console.error(err);
+  const serverError = statusCode >= 500;
+  if (serverError) {
+    logger.error("Unhandled error", {
+      error: err.message,
+      method: req.method,
+      path: req.path,
+      stack: env.nodeEnv === "production" ? undefined : err.stack,
+    });
+  }
 
   res.status(statusCode).json({
     success: false,
-    message:
-      statusCode === 500 && env.nodeEnv === "production"
-        ? "Internal server error"
-        : message,
+    message: serverError ? "Internal server error" : message, // details stay in the logs
     ...(errors && { errors }),
-    ...(env.nodeEnv === "development" &&
-      statusCode === 500 && { stack: err.stack }),
   });
 };

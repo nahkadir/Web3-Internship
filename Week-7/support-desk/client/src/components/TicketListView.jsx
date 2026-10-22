@@ -5,6 +5,7 @@ import useTickets from "../hooks/useTickets";
 import { StatusBadge, PriorityBadge } from "./Badges";
 import { STATUSES, PRIORITIES, CATEGORIES, label } from "../constants/ticket";
 import useSocketEvent from "../hooks/useSocketEvent";
+import { SlaBadge } from "./Sla";
 
 const initial = {
   search: "",
@@ -14,6 +15,7 @@ const initial = {
   assignedTo: "",
   from: "",
   to: "",
+  overdue: "",
   sort: "createdAt:desc",
   page: 1,
 };
@@ -150,6 +152,20 @@ export default function TicketListView({
         >
           Clear filters
         </button>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={filters.overdue === "true"}
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                overdue: e.target.checked ? "true" : "",
+                page: 1,
+              }))
+            }
+          />
+          Overdue only
+        </label>
       </div>
 
       {error && (
@@ -164,6 +180,7 @@ export default function TicketListView({
               <th className="p-3">Subject</th>
               <th className="p-3">Status</th>
               <th className="p-3">Priority</th>
+              <th className="p-3">SLA</th>
               <th className="p-3">Category</th>
               {showCustomer && <th className="p-3">Customer</th>}
               <th className="p-3">Assigned to</th>
@@ -184,6 +201,9 @@ export default function TicketListView({
                 </td>
                 <td className="p-3">
                   <PriorityBadge priority={t.priority} />
+                </td>
+                <td className="p-3">
+                  <SlaBadge sla={t.sla} />
                 </td>
                 <td className="p-3">{label(t.category)}</td>
                 {showCustomer && <td className="p-3">{t.createdBy?.name}</td>}

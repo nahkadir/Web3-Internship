@@ -1,5 +1,5 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { signToken, cookieOptions } from "../utils/token.js";
+import { signToken, cookieOptions, signSocketToken } from "../utils/token.js";
 import * as authService from "../services/auth.service.js";
 
 const sendAuthResponse = (res, user, statusCode) => {
@@ -25,4 +25,8 @@ export const logout = asyncHandler(async (req, res) => {
 
 export const getMe = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { user: req.user } });
+});
+
+export const socketToken = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: { token: signSocketToken(req.user._id) } });
 });

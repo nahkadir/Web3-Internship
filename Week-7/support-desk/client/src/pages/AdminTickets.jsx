@@ -5,9 +5,14 @@ import TicketListView from "../components/TicketListView";
 export default function AdminTickets() {
   return (
     <DashboardLayout title="All Tickets">
-      <Link to="/admin" className="text-sm text-indigo-600 inline-block mb-4">
-        ← User management
-      </Link>
+      <div className="flex gap-4 mb-4 text-sm">
+        <Link to="/admin" className="text-indigo-600">
+          ← Users
+        </Link>
+        <Link to="/admin/analytics" className="text-indigo-600">
+          Analytics
+        </Link>
+      </div>
       <TicketListView endpoint="/admin/tickets" isAdmin showCustomer />
     </DashboardLayout>
   );
