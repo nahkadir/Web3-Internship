@@ -2,13 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "Week-6/marketplace/**"
       - ".github/workflows/**"
   pull_request:
     paths:
       - "Week-6/marketplace/**"
+  workflow_dispatch:
 
 jobs:
   backend-tests:
