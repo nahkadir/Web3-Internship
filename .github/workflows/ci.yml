@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -43,3 +43,33 @@ jobs:
       - run: npm run build
         env:
           VITE_API_URL: /api
+
+  docker-build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t marketplace-backend Week-6/marketplace/backend
+      - run: docker build -t marketplace-frontend Week-6/marketplace/frontend
+
+  deploy-backend:
+    needs: [backend-tests, frontend-build, docker-build]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-22.04
+    env:
+      HEALTH_URL: https://marketplace-api-ozw3.onrender.com/api/health
+    steps:
+      - name: Trigger the Render deploy
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+      - name: Wait until the new version is live
+        run: |
+          for i in $(seq 1 30); do
+            LIVE=$(curl -fsS --max-time 60 "$HEALTH_URL" | grep -o '"commit":"[^"]*"' | cut -d'"' -f4 || true)
+            echo "attempt $i: live commit = '$LIVE', expected = '${GITHUB_SHA::7}'"
+            [ "$LIVE" = "${GITHUB_SHA::7}" ] && echo "Deployed." && exit 0
+            sleep 20
+          done
+          echo "The new version did not go live in time"
+          exit 1
