@@ -11,6 +11,34 @@ A full-stack marketplace where vendors sell through their own stores, customers 
 - **Testing:** Vitest, Supertest, mongodb-memory-server
 - **Deployment:** Vercel (frontend and backend as two projects) + MongoDB Atlas
 
+## Live demo
+
+- **App:** https://web3-internship-tb1y.vercel.app
+- **API health check:** https://marketplace-api-ozw3.onrender.com/api/health
+- **Repository:** https://github.com/nahkadir/Web3-Internship (folder `Week-6/marketplace`)
+
+## Screenshots
+
+### CI/CD pipeline & Automated tests
+
+GitHub Actions runs the backend tests, the frontend build and the Docker builds on every push, then deploys the API to Render and waits until the new commit is live.
+
+58 automated tests (unit, API and integration) covering auth, RBAC, vendors, products, cart, checkout, payments, webhooks, commissions and refunds.
+
+![CI/CD pipeline run with all jobs passing](docs/screenshots/01-ci-pipeline.png)
+
+### Production deployment and monitoring
+
+The API runs on Render, and the health endpoint reports the deployed commit.
+
+![Render service showing Live status](docs/screenshots/02-render-live.png)
+
+![Render logs](docs/screenshots/03-render-logs.png)
+
+![Health endpoint response with the deployed commit](docs/screenshots/04-health-endpoint.png)
+
+![UptimeRobot monitors](docs/screenshots/05-uptime-monitor.png)
+
 ## Setup
 
 ```bash
@@ -106,3 +134,12 @@ Server-side authorization on every protected route, Zod validation, bcrypt (cost
 - Rate limiting is in-memory per instance and keyed by IP, so it is approximate on serverless.
 - Product images and store logos are URLs (no file uploads). Refunds are full refunds only.
 - Frontend tests are a manual QA checklist, not automated.
+
+## CI/CD, Docker and monitoring
+
+- **Tests:** 58 automated tests (Vitest and Supertest, in-memory MongoDB) run on every push and pull request.
+- **Docker:** `docker compose up --build` runs MongoDB, the API and the frontend (nginx) locally at http://localhost:8080. Both images are also built in CI.
+- **CI/CD:** GitHub Actions runs the tests, the frontend build and the Docker builds. On master, it triggers a Render deploy, then waits until `/api/health` reports the new commit.
+- **Hosting:** API on Render (Docker), frontend on Vercel, database on MongoDB Atlas.
+- **Monitoring:** `/api/health` reports database status and the deployed commit, and is checked every 5 minutes by UptimeRobot. Structured logs are in Render.
+- **Secrets:** never committed. They live in Render, Vercel and GitHub Actions secrets.
