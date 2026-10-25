@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import * as adminPayments from "../services/adminPayment.service.js";
 import * as adminOrders from "../services/adminOrder.service.js";
 import { getAdminStats } from "../services/earnings.service.js";
-import { listAuditLogs } from "../services/audit.service.js";
+import { audit, listAuditLogs } from "../services/audit.service.js";
 
 export const listPayments = asyncHandler(async (req, res) => {
   res.json({
